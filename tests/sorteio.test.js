@@ -54,30 +54,20 @@ Vera; 5551966660000`;
   assert.ok(chi < 280, `distribuição viciada (qui-quadrado ${chi.toFixed(1)})`);
 
   // ---------- Criptografia ----------
-  assert.strictEqual(new Set(A._emojis).size, 64, '64 emojis distintos no selo');
-  const ctx = await A.novoSorteioCripto();
-  const dados = { n: 'João', a: 'Conceição', e: 'Natal 🎄', d: '24/12', v: 'R$ 100' };
-  const token = await A.selar(dados, ctx);
-  const aberto = await A.abrir(token);
-  assert.deepStrictEqual(aberto.dados, dados);
-  assert.strictEqual(aberto.selo, ctx.selo);
-  assert.strictEqual(aberto.selo.split(' ').length, 5);
-  assert.ok(!token.includes('Concei') && !Buffer.from(token.split('.')[2], 'base64').toString('latin1').includes('Concei'), 'nome não aparece no link');
+  const token = await A.selar({ n: 'João Pedro', a: 'Vó Conceição', e: 'Amigo Secreto da Família' });
+  assert.deepStrictEqual(await A.abrir(token), { n: 'João', a: 'Vó Conceição', e: 'Amigo Secreto da Família' });
+  assert.ok(!Buffer.from(token, 'base64url').toString('latin1').includes('Concei'), 'nome não aparece no link');
+  assert.ok(token.length <= 110, `link curto (${token.length} caracteres)`);
+  assert.deepStrictEqual(await A.abrir(await A.selar({ n: 'Ana', a: 'Bia' })), { n: 'Ana', a: 'Bia', e: '' }, 'evento opcional');
+  assert.notStrictEqual(token, await A.selar({ n: 'João Pedro', a: 'Vó Conceição', e: 'Amigo Secreto da Família' }), 'cada link tem chave própria');
 
-  const partes = token.split('.');
   const falhar = (t, msg) => A.abrir(t).then(() => assert.fail(msg), () => {});
-  // Primo altera um caractere do conteúdo cifrado.
-  const corpo = partes[2]; const trocado = corpo.slice(0, 20) + (corpo[20] === 'A' ? 'B' : 'A') + corpo.slice(21);
-  await falhar([partes[0], partes[1], trocado, partes[3], partes[4]].join('.'), 'conteúdo adulterado deveria falhar');
-  // Primo troca a chave do link.
-  await falhar([partes[0], partes[2].slice(0, 43), partes[2], partes[3], partes[4]].join('.'), 'chave trocada deveria falhar');
-  // Primo fabrica um link inteiro com a própria chave: abre, mas o selo é diferente.
-  const ctxFalso = await A.novoSorteioCripto();
-  const falso = await A.abrir(await A.selar({ ...dados, a: 'Tia Chata' }, ctxFalso));
-  assert.notStrictEqual(falso.selo, ctx.selo, 'link forjado deve exibir outro selo');
-  // Primo junta a assinatura/chave pública oficiais com conteúdo dele: falha.
-  const tokenFalso = (await A.selar({ ...dados, a: 'Tia Chata' }, ctxFalso)).split('.');
-  await falhar([tokenFalso[0], tokenFalso[1], tokenFalso[2], partes[3], partes[4]].join('.'), 'mistura de links deveria falhar');
+  const trocar = (t, i) => t.slice(0, i) + (t[i] === 'A' ? 'B' : 'A') + t.slice(i + 1);
+  await falhar(trocar(token, 30), 'conteúdo adulterado deveria falhar');
+  await falhar(trocar(token, 5), 'chave adulterada deveria falhar');
+  await falhar(token.slice(0, -6), 'link cortado deveria falhar');
+  await falhar('teste', 'lixo deveria falhar');
+  await falhar('', 'vazio deveria falhar');
 
   // ---------- Backup com senha ----------
   const bk = await A.cifrarComSenha({ x: 1, nome: 'Zé' }, 'senha-forte');

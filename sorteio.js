@@ -84,10 +84,10 @@
   }
 
   // ---------- Criptografia ----------
-  // Cada link leva: chave AES-256 própria + resultado cifrado (AES-GCM) + assinatura ECDSA
-  // do organizador + chave pública. Tudo vai depois do "#", que o navegador nunca envia ao servidor.
-  // A chave privada só existe na memória durante o sorteio e é descartada: ninguém, nem o
-  // organizador, consegue fabricar um link novo que passe na verificação depois.
+  // Cada link leva uma chave AES-128 própria + o resultado cifrado com AES-GCM, tudo depois do "#"
+  // (o navegador nunca envia essa parte ao servidor). Abrir o próprio link não revela nada dos
+  // outros, e qualquer alteração no link é detectada pela etiqueta de autenticação do GCM.
+  // Como cada chave é usada uma única vez, o vetor de inicialização pode ser fixo sem perda de segurança.
 
   const enc = new TextEncoder(), dec = new TextDecoder();
   const b64u = (bytes) => {
@@ -100,56 +100,26 @@
     let o = 0; partes.forEach(p => { out.set(p, o); o += p.length; });
     return out;
   };
-  const ECDSA = { name: 'ECDSA', namedCurve: 'P-256' };
-  const ASSINA = { name: 'ECDSA', hash: 'SHA-256' };
+  const IV = new Uint8Array(12);
+  const limpar = (t) => String(t || '').replace(/\n/g, ' ').trim();
 
-  // 64 emojis → 6 bits cada; 5 emojis = 30 bits, inviável de falsificar por tentativa.
-  const EMOJIS = Array.from('🎄🎁⭐🔔🦌⛄🍪🕯️🧦🎅🤶🌟❄️🍷🥂🎉🎈🍫🍰🧁🍓🍒🍊🍋🍉🍇🥥🌈🌻🌹🌵🍀🐶🐱🦊🐻🐼🐨🦁🐯🐸🐧🦉🦋🐢🐬🐳🦄🚀✈️⛵🚲🎸🎺🥁🎨📚⚽🏀🎯🎲💎👑🔑🧩');
-  const listaEmojis = (() => {
-    // Array.from separa alguns emojis com seletor de variação (️) em dois; reagrupa.
-    const out = [];
-    EMOJIS.forEach(c => { if (c === '️' && out.length) out[out.length - 1] += c; else out.push(c); });
-    return out.slice(0, 64);
-  })();
-
-  async function seloDe(pubRaw) {
-    const h = new Uint8Array(await subtle.digest('SHA-256', pubRaw));
-    let bits = 0, acc = 0, out = [];
-    for (const b of h) {
-      acc = (acc << 8) | b; bits += 8;
-      while (bits >= 6 && out.length < 5) { bits -= 6; out.push(listaEmojis[(acc >> bits) & 63]); }
-      if (out.length === 5) break;
-    }
-    return out.join(' ');
-  }
-
-  async function novoSorteioCripto() {
-    const par = await subtle.generateKey(ECDSA, false, ['sign', 'verify']);
-    const pub = new Uint8Array(await subtle.exportKey('raw', par.publicKey));
-    return { privada: par.privateKey, pub, selo: await seloDe(pub) };
-  }
-
-  async function selar(dados, ctx) {
-    const chave = cripto.getRandomValues(new Uint8Array(32));
-    const iv = cripto.getRandomValues(new Uint8Array(12));
+  // dados = { n: nome de quem tirou, a: nome sorteado, e: nome do amigo secreto }
+  async function selar(dados) {
+    const chave = cripto.getRandomValues(new Uint8Array(16));
     const aes = await subtle.importKey('raw', chave, 'AES-GCM', false, ['encrypt']);
-    const cifrado = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, aes, enc.encode(JSON.stringify(dados))));
-    const corpo = juntar(iv, cifrado);
-    const assinatura = new Uint8Array(await subtle.sign(ASSINA, ctx.privada, juntar(chave, corpo)));
-    return ['v2', b64u(chave), b64u(corpo), b64u(assinatura), b64u(ctx.pub)].join('.');
+    const texto = enc.encode([limpar(dados.n).split(' ')[0], limpar(dados.a), limpar(dados.e)].join('\n'));
+    const cifrado = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv: IV }, aes, texto));
+    return b64u(juntar(chave, cifrado));
   }
 
-  // Devolve { dados, selo } ou lança erro se o link foi adulterado/forjado.
+  // Devolve { n, a, e } ou lança erro se o link estiver cortado ou adulterado.
   async function abrir(token) {
-    const [versao, k, c, s, p] = String(token).split('.');
-    if (versao !== 'v2' || !p) throw new Error('formato');
-    const chave = unb64u(k), corpo = unb64u(c), pub = unb64u(p);
-    const pubKey = await subtle.importKey('raw', pub, ECDSA, false, ['verify']);
-    const ok = await subtle.verify(ASSINA, pubKey, unb64u(s), juntar(chave, corpo));
-    if (!ok) throw new Error('assinatura');
-    const aes = await subtle.importKey('raw', chave, 'AES-GCM', false, ['decrypt']);
-    const claro = await subtle.decrypt({ name: 'AES-GCM', iv: corpo.slice(0, 12) }, aes, corpo.slice(12));
-    return { dados: JSON.parse(dec.decode(claro)), selo: await seloDe(pub) };
+    const raw = unb64u(String(token).trim());
+    if (raw.length < 16 + 16 + 3) throw new Error('curto');
+    const aes = await subtle.importKey('raw', raw.slice(0, 16), 'AES-GCM', false, ['decrypt']);
+    const [n, a, e = ''] = dec.decode(await subtle.decrypt({ name: 'AES-GCM', iv: IV }, aes, raw.slice(16))).split('\n');
+    if (!n || !a) throw new Error('formato');
+    return { n, a, e };
   }
 
   // Backup protegido por senha (PBKDF2 600 mil iterações + AES-GCM).
@@ -176,12 +146,13 @@
     t += `Abra seu link pessoal para descobrir quem você tirou. Ele é só seu, não compartilhe!\n${link}`;
     if (ev.d) t += `\n\n📅 ${ev.d}`;
     if (ev.v) t += `\n💰 Valor sugerido: ${ev.v}`;
+    t += `\n\n⚠️ Só vale o link enviado por este número. Se alguém te mandar outro, é pegadinha. 😉`;
     return t;
   }
 
   const api = {
     normalizarTelefone, parse, embaralhar, sortear,
-    novoSorteioCripto, selar, abrir, cifrarComSenha, decifrarComSenha, mensagem, _emojis: listaEmojis,
+    selar, abrir, cifrarComSenha, decifrarComSenha, mensagem,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AmigoSecreto = api;

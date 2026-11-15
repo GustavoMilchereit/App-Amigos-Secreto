@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amigo Secreto da Família</title>
+<style>
+  :root {
+    --bg: #f6f3ee; --card: #ffffff; --text: #1f1d1a; --muted: #6b665e;
+    --line: #e3ddd3; --accent: #b3261e; --accent-2: #1e6b3a; --warn: #8a5a00; --warn-bg: #fff4dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #171614; --card: #22201d; --text: #f1ede6; --muted: #a59f95;
+      --line: #3a3631; --accent: #e5534b; --accent-2: #3fae69; --warn: #f0c060; --warn-bg: #3a2f17; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 18px; }
+  label { display: block; font-weight: 600; font-size: .9rem; margin: 10px 0 4px; }
+  input, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit; }
+  textarea { min-height: 220px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  button, .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-weight: 600;
+    cursor: pointer; text-decoration: none; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.wa { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .hint { color: var(--muted); font-size: .88rem; margin: 6px 0 0; }
+  .msg { padding: 10px 14px; border-radius: 8px; margin-top: 12px; font-size: .92rem; }
+  .msg.err { background: var(--warn-bg); color: var(--warn); }
+  .msg.ok { background: color-mix(in srgb, var(--accent-2) 15%, transparent); color: var(--accent-2); }
+  table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
+  td .actions { margin: 0; gap: 6px; }
+  td .btn, td button { padding: 6px 10px; font-size: .85rem; }
+  tr.sent td:first-child::after { content: " ✓"; color: var(--accent-2); }
+  .hidden { display: none; }
+  .table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎁 Amigo Secreto da Família</h1>
+  <p class="sub">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
+
+  <section id="sec-evento">
+    <h2>1. Evento</h2>
+    <div class="row">
+      <div><label for="ev-nome">Nome do evento</label><input id="ev-nome" value="Amigo Secreto da Família"></div>
+      <div><label for="ev-data">Data e local</label><input id="ev-data" placeholder="24/12 às 20h, casa da vó"></div>
+    </div>
+    <div class="row">
+      <div><label for="ev-valor">Valor sugerido</label><input id="ev-valor" placeholder="R$ 100"></div>
+      <div><label for="ev-url">Endereço da página de revelação</label><input id="ev-url" placeholder="Deixe vazio se abriu este painel pelo site"></div>
+    </div>
+    <p class="hint">O endereço precisa estar publicado na internet (ex.: GitHub Pages ou Netlify), senão os links não abrem no celular dos participantes. Preencha tudo <b>antes</b> de sortear: o nome do evento aparece na página de cada pessoa, e data e valor vão no texto da mensagem.</p>
+  </section>
+
+  <section id="sec-pessoas">
+    <h2>2. Participantes</h2>
+    <p class="hint" style="margin-top:0">Uma pessoa por linha: <b>Nome; Telefone; Grupo</b>. O grupo é opcional: pessoas do mesmo grupo (casal, pais e filhos pequenos) <b>não tiram umas às outras</b>. Também dá para colar direto do Excel ou do Google Sheets.</p>
+    <textarea id="pessoas" spellcheck="false" placeholder="Maria Silva; (11) 98765-4321; casal1
+João Silva; 11 91234-5678; casal1
+Ana Souza; 21999998888
+..."></textarea>
+    <div class="actions">
+      <label class="btn" style="margin:0">📄 Carregar CSV<input type="file" id="csv" accept=".csv,.txt" class="hidden"></label>
+      <button class="primary" id="btn-sortear">🎲 Sortear</button>
+    </div>
+    <div id="feedback"></div>
+  </section>
+
+  <section id="sec-links" class="hidden">
+    <h2>3. Enviar os links</h2>
+    <p class="hint" style="margin-top:0">A mensagem leva só o link pessoal cifrado. Este painel não guarda quem tirou quem. Não abra os links dos outros.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Participante</th><th>Telefone</th><th>Enviar</th></tr></thead>
+      <tbody id="tabela"></tbody>
+    </table></div>
+    <div class="actions">
+      <button id="btn-backup">🔒 Baixar backup com senha</button>
+      <button id="btn-refazer">↺ Refazer sorteio</button>
+    </div>
+    <p class="hint">Os links ficam salvos neste navegador para reenvio. Para reenviar de outro aparelho, use o backup.</p>
+  </section>
+  <p class="hint" style="text-align:center"><label class="btn" style="display:inline-flex;margin:0">📂 Restaurar backup<input type="file" id="arq-backup" class="hidden"></label></p>
+</main>
+
+<script src="sorteio.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const STORE = 'amigo-secreto-v3';
+const fields = ['ev-nome', 'ev-data', 'ev-valor', 'ev-url', 'pessoas'];
+try { ['amigo-secreto-v1', 'amigo-secreto-v2'].forEach(k => localStorage.removeItem(k)); } catch {} // formatos antigos
+
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
+function save(extra = {}) {
+  const st = load();
+  fields.forEach(f => st[f] = $(f).value);
+  try { localStorage.setItem(STORE, JSON.stringify({ ...st, ...extra })); } catch {}
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function feedback(html, kind) { $('feedback').innerHTML = html ? `<div class="msg ${kind}">${html}</div>` : ''; }
+function evento() { return { e: $('ev-nome').value.trim(), d: $('ev-data').value.trim(), v: $('ev-valor').value.trim() }; }
+
+function baseUrl() {
+  let u = $('ev-url').value.trim();
+  if (!u && location.protocol.startsWith('http')) u = location.href.replace(/[^/]*([?#].*)?$/, '');
+  u = u.replace(/(index|painel|revelar)\.html$/, '');
+  if (u && !u.endsWith('/')) u += '/';
+  return u;
+}
+
+function render() {
+  const st = load(), envio = st.envio;
+  $('sec-links').classList.toggle('hidden', !envio);
+  if (!envio) return;
+  const base = baseUrl();
+  const sent = envio.enviados || {};
+  $('tabela').innerHTML = '';
+  envio.itens.forEach((it, i) => {
+    const link = base + '#' + it.token;
+    const texto = AmigoSecreto.mensagem(it.nome, envio.evento, link);
+    const tr = document.createElement('tr');
+    if (sent[i]) tr.className = 'sent';
+    tr.innerHTML = `<td>${esc(it.nome)}</td><td>+${esc(it.telefone)}</td><td><div class="actions"></div></td>`;
+    const box = tr.querySelector('.actions');
+    const marcar = () => { sent[i] = true; envio.enviados = sent; save({ envio }); tr.className = 'sent'; };
+    const mk = (label, href, cls) => {
+      const a = document.createElement('a');
+      a.className = 'btn ' + (cls || ''); a.textContent = label; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      a.onclick = marcar; box.appendChild(a);
+    };
+    mk('WhatsApp', `https://wa.me/${it.telefone}?text=${encodeURIComponent(texto)}`, 'wa');
+    mk('SMS', `sms:+${it.telefone}?&body=${encodeURIComponent(texto)}`);
+    const cp = document.createElement('button');
+    cp.textContent = 'Copiar';
+    cp.onclick = async () => { marcar(); try { await navigator.clipboard.writeText(texto); cp.textContent = 'Copiado'; } catch { prompt('Copie a mensagem:', texto); } };
+    box.appendChild(cp);
+    $('tabela').appendChild(tr);
+  });
+  if (!base) feedback('Preencha o <b>endereço da página de revelação</b> no passo 1. Sem ele, os links não funcionam.', 'err');
+}
+
+$('btn-sortear').onclick = async () => {
+  const st = load();
+  if (st.envio && !confirm('Já existe um sorteio. Sortear de novo invalida os links enviados. Continuar?')) return;
+  const { pessoas, erros } = AmigoSecreto.parse($('pessoas').value);
+  if (erros.length) return feedback(erros.map(esc).join('<br>'), 'err');
+  try {
+    $('btn-sortear').disabled = true;
+    const ev = evento();
+    const pares = AmigoSecreto.sortear(pessoas);
+    const itens = [];
+    for (const par of pares) {
+      itens.push({ nome: par.de.nome, telefone: par.de.telefone,
+        token: await AmigoSecreto.selar({ n: par.de.nome, a: par.para.nome, e: ev.e }) });
+    }
+    // "pares" sai de escopo aqui: só os links cifrados ficam salvos.
+    save({ envio: { evento: ev, itens, enviados: {} } });
+    feedback(`Sorteio feito com ${pessoas.length} participantes. Ninguém tirou a si mesmo nem alguém do próprio grupo, e a revelação forma uma roda única.`, 'ok');
+    render();
+  } catch (e) { feedback(esc(e.message), 'err'); }
+  finally { $('btn-sortear').disabled = false; }
+};
+
+$('btn-refazer').onclick = () => {
+  if (!confirm('Apagar o sorteio atual? Avise a família para ignorar os links antigos.')) return;
+  save({ envio: null }); feedback(''); render();
+};
+
+$('btn-backup').onclick = async () => {
+  const senha = prompt('Crie uma senha para o backup (mínimo 6 caracteres):');
+  if (!senha) return;
+  if (senha.length < 6) return alert('Senha muito curta.');
+  const conteudo = await AmigoSecreto.cifrarComSenha(load(), senha);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([conteudo], { type: 'text/plain' }));
+  a.download = 'backup-amigo-secreto.txt'; a.click();
+};
+
+$('arq-backup').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const senha = prompt('Senha do backup:'); if (!senha) return;
+  try {
+    const st = await AmigoSecreto.decifrarComSenha(await f.text(), senha);
+    localStorage.setItem(STORE, JSON.stringify(st));
+    fields.forEach(k => { if (st[k] != null) $(k).value = st[k]; });
+    feedback('Backup restaurado.', 'ok'); render();
+  } catch { feedback('Senha incorreta ou arquivo inválido.', 'err'); }
+  e.target.value = '';
+};
+
+$('csv').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  $('pessoas').value = (await f.text()).replace(/^nome[^\n]*\n/i, '');
+  save();
+};
+
+fields.forEach(f => $(f).addEventListener('input', () => { save(); if (f === 'ev-url') render(); }));
+
+(function init() {
+  const st = load();
+  fields.forEach(f => { if (st[f] != null) $(f).value = st[f]; });
+  render();
+})();
+</script>
+</body>
+</html>
