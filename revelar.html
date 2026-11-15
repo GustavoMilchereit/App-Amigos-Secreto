@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seu Amigo Secreto</title>
+<style>
+  :root { --bg: #f6f3ee; --card: #fff; --text: #1f1d1a; --muted: #6b665e; --accent: #b3261e; --line: #e3ddd3; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #171614; --card: #22201d; --text: #f1ede6; --muted: #a59f95; --accent: #e5534b; --line: #3a3631; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--text);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 32px 24px;
+    max-width: 420px; width: 100%; text-align: center; }
+  .emoji { font-size: 3rem; }
+  h1 { font-size: 1.3rem; margin: 8px 0; }
+  p { color: var(--muted); margin: 8px 0; }
+  .nome { font-size: 2rem; font-weight: 800; color: var(--accent); margin: 16px 0; word-break: break-word; }
+  button { margin-top: 16px; padding: 14px 22px; border: 0; border-radius: 10px; background: var(--accent);
+    color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="emoji">🎁</div>
+  <div id="antes">
+    <h1 id="ola">Olá!</h1>
+    <p>Certifique-se de que ninguém está olhando a sua tela.</p>
+    <button id="btn">Revelar meu amigo secreto</button>
+  </div>
+  <div id="depois" class="hidden">
+    <p>Você tirou:</p>
+    <div class="nome" id="nome"></div>
+    <p id="info"></p>
+    <p style="font-size:.85rem">Guarde segredo! 🤫</p>
+  </div>
+  <div id="erro" class="hidden"><h1>Link inválido</h1><p>Peça ao organizador para reenviar seu link.</p></div>
+</div>
+<script src="sorteio.js"></script>
+<script>
+try {
+  const d = AmigoSecreto.decode(location.hash.slice(1));
+  if (!d.n || !d.a) throw 0;
+  document.title = d.e || document.title;
+  document.getElementById('ola').textContent = `Olá, ${d.n}!`;
+  document.getElementById('nome').textContent = d.a;
+  document.getElementById('info').innerHTML = [d.e, d.d, d.v && 'Valor sugerido: ' + d.v]
+    .filter(Boolean).map(s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))).join('<br>');
+  document.getElementById('btn').onclick = () => {
+    document.getElementById('antes').classList.add('hidden');
+    document.getElementById('depois').classList.remove('hidden');
+  };
+} catch {
+  document.getElementById('antes').classList.add('hidden');
+  document.getElementById('erro').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
