@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Amigo Secreto da Família</title>
+<title>Amigo Secreto: Painel</title>
 <style>
   :root {
     --bg: #f6f3ee; --card: #ffffff; --text: #1f1d1a; --muted: #6b665e;
@@ -49,13 +49,13 @@
 </head>
 <body>
 <main>
-  <h1>🎁 Amigo Secreto da Família</h1>
+  <h1>🎁 Amigo Secreto</h1>
   <p class="sub">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
 
   <section id="sec-evento">
     <h2>1. Evento</h2>
     <div class="row">
-      <div><label for="ev-nome">Nome do evento</label><input id="ev-nome" value="Amigo Secreto da Família"></div>
+      <div><label for="ev-nome">Nome do amigo secreto</label><input id="ev-nome" placeholder="Ex.: Amigo Secreto da Família"></div>
       <div><label for="ev-data">Data e local</label><input id="ev-data" placeholder="24/12 às 20h, casa da vó"></div>
     </div>
     <div class="row">
@@ -156,6 +156,7 @@ $('btn-sortear').onclick = async () => {
   if (st.envio && !confirm('Já existe um sorteio. Sortear de novo invalida os links enviados. Continuar?')) return;
   const { pessoas, erros } = AmigoSecreto.parse($('pessoas').value);
   if (erros.length) return feedback(erros.map(esc).join('<br>'), 'err');
+  if (!$('ev-nome').value.trim()) { $('ev-nome').focus(); return feedback('Dê um nome ao amigo secreto no passo 1. Ele aparece na mensagem e na página de cada pessoa.', 'err'); }
   try {
     $('btn-sortear').disabled = true;
     const ev = evento();
@@ -174,7 +175,7 @@ $('btn-sortear').onclick = async () => {
 };
 
 $('btn-refazer').onclick = () => {
-  if (!confirm('Apagar o sorteio atual? Avise a família para ignorar os links antigos.')) return;
+  if (!confirm('Apagar o sorteio atual? Avise os participantes para ignorar os links antigos.')) return;
   save({ envio: null }); feedback(''); render();
 };
 
