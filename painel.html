@@ -80,13 +80,14 @@
     <h2>1. Evento</h2>
     <div class="row">
       <div><label for="ev-nome">Nome do amigo secreto</label><input id="ev-nome" placeholder="Ex.: Amigo Secreto da Família"></div>
-      <div><label for="ev-data">Data e local</label><input id="ev-data" placeholder="24/12 às 20h, casa da vó"></div>
+      <div><label for="ev-data">📅 Data e horário</label><input id="ev-data" placeholder="Ex.: 24/12 às 20h"></div>
     </div>
     <div class="row">
-      <div><label for="ev-valor">Valor sugerido</label><input id="ev-valor" placeholder="R$ 100"></div>
-      <div><label for="ev-url">Endereço da página de revelação</label><input id="ev-url" placeholder="Deixe vazio se abriu este painel pelo site"></div>
+      <div><label for="ev-local">📍 Local</label><input id="ev-local" placeholder="Ex.: Casa da vó"></div>
+      <div><label for="ev-valor">💰 Valor sugerido</label><input id="ev-valor" placeholder="Ex.: R$ 100"></div>
     </div>
-    <p class="hint">O endereço precisa estar publicado na internet (ex.: GitHub Pages ou Netlify), senão os links não abrem no celular dos participantes. Preencha tudo <b>antes</b> de sortear: o nome do evento aparece na página de cada pessoa, e data e valor vão no texto da mensagem.</p>
+    <label for="ev-url">Endereço da página de revelação</label><input id="ev-url" placeholder="Deixe vazio se abriu este painel pelo site">
+    <p class="hint">O endereço precisa estar publicado na internet (ex.: GitHub Pages ou Netlify), senão os links não abrem no celular dos participantes. Preencha tudo <b>antes</b> de sortear: nome, data, local e valor aparecem na mensagem e na página de cada pessoa.</p>
   </section>
 
   <section id="sec-pessoas">
@@ -136,14 +137,16 @@
     </div>
     <p class="hint">Os links ficam salvos neste navegador para reenvio. Para reenviar de outro aparelho, use o backup.</p>
   </section>
-  <p class="hint" style="text-align:center"><label class="btn" style="display:inline-flex;margin:0">📂 Restaurar backup<input type="file" id="arq-backup" class="hidden"></label></p>
+  <p class="hint" style="text-align:center"><label class="btn" style="display:inline-flex;margin:0">📂 Restaurar backup<input type="file" id="arq-backup" class="hidden"></label>
+    <button id="btn-zero" style="margin-left:6px">🆕 Começar do zero</button></p>
+  <p class="hint" style="text-align:center">Use "Começar do zero" para organizar outro amigo secreto neste mesmo navegador. Antes, termine de enviar os links do atual.</p>
 </main>
 
 <script src="sorteio.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const STORE = 'amigo-secreto-v3';
-const fields = ['ev-nome', 'ev-data', 'ev-valor', 'ev-url'];
+const fields = ['ev-nome', 'ev-data', 'ev-local', 'ev-valor', 'ev-url'];
 try { ['amigo-secreto-v1', 'amigo-secreto-v2'].forEach(k => localStorage.removeItem(k)); } catch {} // formatos antigos
 
 function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
@@ -154,7 +157,7 @@ function save(extra = {}) {
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function feedback(html, kind) { $('feedback').innerHTML = html ? `<div class="msg ${kind}">${html}</div>` : ''; }
-function evento() { return { e: $('ev-nome').value.trim(), d: $('ev-data').value.trim(), v: $('ev-valor').value.trim() }; }
+function evento() { return { e: $('ev-nome').value.trim(), d: $('ev-data').value.trim(), l: $('ev-local').value.trim(), v: $('ev-valor').value.trim() }; }
 
 function baseUrl() {
   let u = $('ev-url').value.trim();
@@ -347,7 +350,7 @@ $('btn-sortear').onclick = async () => {
     const itens = [];
     for (const par of pares) {
       itens.push({ nome: par.de.nome, telefone: par.de.telefone,
-        token: await AmigoSecreto.selar({ n: par.de.nome, a: par.para.nome, e: ev.e }) });
+        token: await AmigoSecreto.selar({ n: par.de.nome, a: par.para.nome, ...ev }) });
     }
     // "pares" sai de escopo aqui: só os links cifrados ficam salvos.
     save({ envio: { evento: ev, itens, enviados: {} } });
@@ -360,6 +363,14 @@ $('btn-sortear').onclick = async () => {
 $('btn-refazer').onclick = () => {
   if (!confirm('Apagar o sorteio atual? Avise os participantes para ignorar os links antigos.')) return;
   save({ envio: null }); feedback(''); render();
+};
+
+$('btn-zero').onclick = () => {
+  const st = load();
+  const aviso = st.envio ? 'Isso apaga o evento, a tabela e o sorteio atual (os links já enviados continuam abrindo, mas você não poderá reenviá-los). Continuar?' : 'Apagar o evento e a tabela para começar outro amigo secreto?';
+  if (!confirm(aviso)) return;
+  try { localStorage.removeItem(STORE); } catch {}
+  location.reload();
 };
 
 $('btn-backup').onclick = async () => {

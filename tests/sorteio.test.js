@@ -83,10 +83,15 @@ Vera; 5551966660000`;
 
   // ---------- Criptografia ----------
   const token = await A.selar({ n: 'João Pedro', a: 'Vó Conceição', e: 'Amigo Secreto da Família' });
-  assert.deepStrictEqual(await A.abrir(token), { n: 'João', a: 'Vó Conceição', e: 'Amigo Secreto da Família' });
+  assert.deepStrictEqual(await A.abrir(token), { n: 'João', a: 'Vó Conceição', e: 'Amigo Secreto da Família', d: '', l: '', v: '' });
+  const completo = await A.selar({ n: 'Ana', a: 'Bia', e: 'Amigo Secreto da Família', d: '24/12 às 20h', l: 'Casa da vó', v: 'R$ 100' });
+  assert.deepStrictEqual(await A.abrir(completo), { n: 'Ana', a: 'Bia', e: 'Amigo Secreto da Família', d: '24/12 às 20h', l: 'Casa da vó', v: 'R$ 100' });
+  assert.ok(completo.length <= 160, `link com data/local/valor ainda curto (${completo.length})`);
+  const soLocal = await A.abrir(await A.selar({ n: 'Ana', a: 'Bia', l: 'Sítio' }));
+  assert.strictEqual(soLocal.l, 'Sítio'); assert.strictEqual(soLocal.d, '');
   assert.ok(!Buffer.from(token, 'base64url').toString('latin1').includes('Concei'), 'nome não aparece no link');
   assert.ok(token.length <= 110, `link curto (${token.length} caracteres)`);
-  assert.deepStrictEqual(await A.abrir(await A.selar({ n: 'Ana', a: 'Bia' })), { n: 'Ana', a: 'Bia', e: '' }, 'evento opcional');
+  assert.deepStrictEqual(await A.abrir(await A.selar({ n: 'Ana', a: 'Bia' })), { n: 'Ana', a: 'Bia', e: '', d: '', l: '', v: '' }, 'evento opcional');
   assert.notStrictEqual(token, await A.selar({ n: 'João Pedro', a: 'Vó Conceição', e: 'Amigo Secreto da Família' }), 'cada link tem chave própria');
 
   const falhar = (t, msg) => A.abrir(t).then(() => assert.fail(msg), () => {});

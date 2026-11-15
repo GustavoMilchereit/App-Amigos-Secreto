@@ -3,7 +3,7 @@
 Sorteio de amigo secreto que roda no navegador, sem servidor e sem custo. Cada participante recebe pelo WhatsApp ou por SMS um **link pessoal criptografado**. Ao abrir, a pessoa toca num presente animado que revela quem ela tirou.
 
 - **Painel do organizador:** https://gustavomilchereit.github.io/App-Amigos-Secreto/painel.html
-- **Links dos participantes:** `https://gustavomilchereit.github.io/App-Amigos-Secreto/#...` (cerca de 155 caracteres)
+- **Links dos participantes:** `https://gustavomilchereit.github.io/App-Amigos-Secreto/#...` (cerca de 200 caracteres)
 
 ## Regras garantidas
 - Ninguém tira a si mesmo.
@@ -14,7 +14,7 @@ Sorteio de amigo secreto que roda no navegador, sem servidor e sem custo. Cada p
 
 ## Passo a passo
 1. Abra o **painel** pelo endereço acima (não pelo arquivo no computador).
-2. Preencha o nome do evento, a data e o valor **antes** de sortear. O nome aparece na página de cada pessoa; data e valor vão no texto da mensagem.
+2. Preencha nome do amigo secreto, data, local e valor **antes** de sortear. Tudo aparece na mensagem e na página de cada pessoa. Para organizar outro amigo secreto no mesmo navegador, use "Começar do zero".
 3. Preencha a tabela de participantes: **Nome completo**, **Telefone** e **Grupo** (opcional). Também dá para colar as 3 colunas direto do Excel/Google Sheets na primeira célula, ou carregar um CSV.
    - **Telefone:** qualquer formatação (traço, espaço, parênteses, +55). DDD obrigatório. O painel mostra o número interpretado embaixo de cada um e avisa DDD inexistente, falta do 9 ou telefone fixo.
    - **Grupo:** maiúsculas, acentos e espaços extras são ignorados. O painel mostra "com: …" para conferir, sugere os grupos já digitados e alerta grupos quase iguais (ex.: "Beatriz" x "Beatris"), com botão para unificar, e grupos de uma pessoa só.

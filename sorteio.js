@@ -194,23 +194,25 @@
   const IV = new Uint8Array(12);
   const limpar = (t) => String(t || '').replace(/\n/g, ' ').trim();
 
-  // dados = { n: nome de quem tirou, a: nome sorteado, e: nome do amigo secreto }
+  // dados = { n: quem tirou, a: nome sorteado, e: nome do amigo secreto, d: data, l: local, v: valor }
   async function selar(dados) {
     const chave = cripto.getRandomValues(new Uint8Array(16));
     const aes = await subtle.importKey('raw', chave, 'AES-GCM', false, ['encrypt']);
-    const texto = enc.encode([limpar(dados.n).split(' ')[0], limpar(dados.a), limpar(dados.e)].join('\n'));
+    const campos = [limpar(dados.n).split(' ')[0], limpar(dados.a), limpar(dados.e), limpar(dados.d), limpar(dados.l), limpar(dados.v)];
+    while (campos.length > 2 && !campos[campos.length - 1]) campos.pop(); // campos vazios no fim não ocupam espaço
+    const texto = enc.encode(campos.join('\n'));
     const cifrado = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv: IV }, aes, texto));
     return b64u(juntar(chave, cifrado));
   }
 
-  // Devolve { n, a, e } ou lança erro se o link estiver cortado ou adulterado.
+  // Devolve { n, a, e, d, l, v } ou lança erro se o link estiver cortado ou adulterado.
   async function abrir(token) {
     const raw = unb64u(String(token).trim());
     if (raw.length < 16 + 16 + 3) throw new Error('curto');
     const aes = await subtle.importKey('raw', raw.slice(0, 16), 'AES-GCM', false, ['decrypt']);
-    const [n, a, e = ''] = dec.decode(await subtle.decrypt({ name: 'AES-GCM', iv: IV }, aes, raw.slice(16))).split('\n');
+    const [n, a, e = '', d = '', l = '', v = ''] = dec.decode(await subtle.decrypt({ name: 'AES-GCM', iv: IV }, aes, raw.slice(16))).split('\n');
     if (!n || !a) throw new Error('formato');
-    return { n, a, e };
+    return { n, a, e, d, l, v };
   }
 
   // Backup protegido por senha (PBKDF2 600 mil iterações + AES-GCM).
@@ -235,7 +237,9 @@
     const primeiro = nome.split(' ')[0];
     let t = `Oi, ${primeiro}! 🎁 O sorteio do *${ev.e || 'Amigo Secreto'}* foi feito.\n\n`;
     t += `Abra seu link pessoal para descobrir quem você tirou. Ele é só seu, não compartilhe!\n${link}`;
-    if (ev.d) t += `\n\n📅 ${ev.d}`;
+    if (ev.d || ev.l || ev.v) t += '\n';
+    if (ev.d) t += `\n📅 ${ev.d}`;
+    if (ev.l) t += `\n📍 ${ev.l}`;
     if (ev.v) t += `\n💰 Valor sugerido: ${ev.v}`;
     t += `\n\n⚠️ Só vale o link enviado por este número. Se alguém te mandar outro, é pegadinha. 😉`;
     return t;

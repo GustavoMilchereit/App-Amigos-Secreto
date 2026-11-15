@@ -107,7 +107,7 @@
     font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: clamp(2.4rem, 12vw, 3.6rem); line-height: 1.05;
     margin: 12px 0 4px; word-break: break-word; transition: filter .3s;
   }
-  .nome span {
+  .nome .palavra > span {
     display: inline-block; opacity: 0; transform: translateY(24px) rotate(-8deg);
     background: linear-gradient(100deg, var(--gold-1), var(--gold-2) 40%, #fff 50%, var(--gold-2) 60%, var(--gold-3));
     background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -115,6 +115,12 @@
   }
   .grupo { margin-top: 10px; padding-top: 12px; border-top: 1px dashed rgba(255, 224, 138, .35);
     text-transform: uppercase; letter-spacing: .2em; font-size: .72rem; font-weight: 700; color: var(--gold-2); }
+  .infos { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+  .infos:empty { display: none; }
+  .infos span { padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, .1);
+    border: 1px solid rgba(255, 255, 255, .16); font-size: .9rem; }
+  .nome .palavra { display: inline-block; white-space: nowrap; }
+  .nome.longo { font-size: clamp(1.8rem, 9vw, 2.8rem); }
   .nome.escondido { filter: blur(16px); }
   .botoes { display: flex; gap: 10px; justify-content: center; margin-top: 18px; opacity: 0; animation: aparecer .6s ease 2.4s forwards; }
   .botoes button {
@@ -178,6 +184,7 @@
         <div class="tirou">Você tirou</div>
         <div class="nome" id="nome"></div>
         <div class="grupo" id="grupo"></div>
+        <div class="infos" id="infos"></div>
       </div>
       <div class="botoes"><button id="esconder">🙈 Esconder nome</button></div>
       <p class="segredo">🤫 Shhh! Guarde segredo até o dia da revelação.</p>
@@ -270,8 +277,18 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;
   document.title = `🎁 ${d.n}, seu amigo secreto chegou!`;
   $('evento').textContent = $('grupo').textContent = '🎄 ' + (d.e || 'Amigo Secreto') + ' 🎄';
   $('ola').textContent = d.n;
-  $('nome').innerHTML = Array.from(d.a).map((ch, i) =>
-    `<span style="animation-delay:${1.5 + i * .06}s, ${1.5 + i * .06}s">${ch === ' ' ? '&nbsp;' : esc(ch)}</span>`).join('');
+  [['📅', d.d], ['📍', d.l], ['💰', d.v]].forEach(([emo, txt]) => {
+    if (!txt) return;
+    const sp = document.createElement('span'); sp.textContent = `${emo} ${txt}`; $('infos').appendChild(sp);
+  });
+  // Letras agrupadas por palavra: a linha só quebra entre palavras, nunca no meio de uma.
+  let k = 0;
+  $('nome').innerHTML = d.a.split(' ').filter(Boolean).map(palavra => '<span class="palavra">' + Array.from(palavra).map(ch => {
+    const t = 1.5 + (k++) * .06;
+    return `<span style="animation-delay:${t}s, ${t}s">${esc(ch)}</span>`;
+  }).join('') + '</span>').join(' ');
+  const maiorPalavra = Math.max(...d.a.split(' ').map(w => w.length));
+  if (maiorPalavra > 9 || d.a.length > 16) $('nome').classList.add('longo');
   mostrar('cena');
 
   let aberto = false;
