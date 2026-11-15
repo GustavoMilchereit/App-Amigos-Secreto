@@ -15,7 +15,9 @@ Sorteio de amigo secreto que roda no navegador, sem servidor e sem custo. Cada p
 ## Passo a passo
 1. Abra o **painel** pelo endereço acima (não pelo arquivo no computador).
 2. Preencha o nome do evento, a data e o valor **antes** de sortear. O nome aparece na página de cada pessoa; data e valor vão no texto da mensagem.
-3. Cole os participantes, um por linha: `Nome; Telefone; Grupo` (grupo é opcional). Pode colar do Excel ou do Google Sheets, ou carregar um CSV.
+3. Preencha a tabela de participantes: **Nome completo**, **Telefone** e **Grupo** (opcional). Também dá para colar as 3 colunas direto do Excel/Google Sheets na primeira célula, ou carregar um CSV.
+   - **Telefone:** qualquer formatação (traço, espaço, parênteses, +55). DDD obrigatório. O painel mostra o número interpretado embaixo de cada um e avisa DDD inexistente, falta do 9 ou telefone fixo.
+   - **Grupo:** maiúsculas, acentos e espaços extras são ignorados. O painel mostra "com: …" para conferir, sugere os grupos já digitados e alerta grupos quase iguais (ex.: "Beatriz" x "Beatris"), com botão para unificar, e grupos de uma pessoa só.
 4. Clique em **Sortear**.
 5. Clique em **WhatsApp** (ou SMS) em cada linha e depois em enviar.
 

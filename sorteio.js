@@ -5,36 +5,127 @@
 
   // ---------- Participantes ----------
 
-  // Normaliza telefone brasileiro para o formato internacional só com dígitos (ex.: 5511987654321).
-  function normalizarTelefone(raw) {
-    let d = String(raw || '').replace(/\D/g, '');
-    if (!d) return '';
-    d = d.replace(/^0+/, '');
-    if (d.length === 10 || d.length === 11) d = '55' + d; // DDD + número, sem código do país
-    return d;
+  const DDDS = new Set([11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33, 34, 35, 37, 38,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 77, 79,
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
+
+  // Aceita qualquer formatação (traços, espaços, parênteses, +55, 0 na frente).
+  // Devolve { numero: '5511987654321', exibir: '(11) 98765-4321', aviso? } ou { erro }.
+  function analisarTelefone(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return { erro: 'Falta o telefone.' };
+    if (/[a-z]/i.test(s)) return { erro: 'O telefone tem letras.' };
+    let d = s.replace(/\D/g, '');
+    if (/^(\+|00)/.test(s)) {
+      d = d.replace(/^00/, '');
+      if (!d.startsWith('55')) {
+        if (d.length < 8 || d.length > 15) return { erro: 'Número do exterior inválido.' };
+        return { numero: d, exibir: '+' + d, aviso: 'Número do exterior: confira o código do país.' };
+      }
+    } else {
+      d = d.replace(/^0+/, '');
+      if (d.length === 8 || d.length === 9) return { erro: 'Falta o DDD. Ex.: 11 98765-4321' };
+      if (d.length === 10 || d.length === 11) d = '55' + d;
+      else if (!((d.length === 12 || d.length === 13) && d.startsWith('55'))) {
+        return { erro: d.length < 8 ? 'Número incompleto.' : 'Dígitos demais. Tire o código da operadora, se tiver.' };
+      }
+    }
+    const ddd = Number(d.slice(2, 4)), num = d.slice(4);
+    if (!DDDS.has(ddd)) return { erro: `O DDD ${d.slice(2, 4)} não existe.` };
+    if (num.length === 9) {
+      if (num[0] !== '9') return { erro: 'Celular com 9 dígitos começa com 9.' };
+      return { numero: d, exibir: `(${ddd}) ${num.slice(0, 5)}-${num.slice(5)}` };
+    }
+    const exibir = `(${ddd}) ${num.slice(0, 4)}-${num.slice(4)}`;
+    return { numero: d, exibir, aviso: /^[6-9]/.test(num) ? 'Falta o 9 na frente? Celular tem 9 dígitos depois do DDD.' : 'Parece telefone fixo. O WhatsApp só funciona em celular.' };
   }
 
-  // Aceita linhas "Nome; Telefone; Grupo", separadas por ; , ou TAB (colado do Excel).
-  function parse(texto) {
-    const pessoas = [];
-    const erros = [];
-    const vistos = new Set();
-    String(texto || '').split(/\r?\n/).forEach((linha, i) => {
-      if (!linha.trim()) return;
-      const sep = linha.includes(';') ? ';' : linha.includes('\t') ? '\t' : ',';
-      const [nome = '', tel = '', grupo = ''] = linha.split(sep).map(s => s.trim());
-      const n = i + 1;
-      if (!nome) return erros.push(`Linha ${n}: nome vazio.`);
-      const chave = nome.toLowerCase();
-      if (vistos.has(chave)) return erros.push(`Linha ${n}: "${nome}" está repetido. Use nomes distintos (ex.: "João Pai" e "João Filho").`);
-      vistos.add(chave);
-      const telefone = normalizarTelefone(tel);
-      if (!telefone) erros.push(`Linha ${n}: ${nome} está sem telefone.`);
-      else if (telefone.length < 12 || telefone.length > 13) erros.push(`Linha ${n}: telefone de ${nome} parece inválido (${tel}).`);
-      pessoas.push({ nome, telefone, grupo: grupo.toLowerCase() });
+  function normalizarTelefone(raw) { return analisarTelefone(raw).numero || ''; }
+
+  // Maiúsculas, acentos e espaços extras não diferenciam grupos.
+  function normalizarGrupo(g) {
+    return String(g || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function distancia(a, b) {
+    const m = a.length, n = b.length;
+    let ant = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const cur = [i];
+      for (let j = 1; j <= n; j++) cur[j] = Math.min(ant[j] + 1, cur[j - 1] + 1, ant[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      ant = cur;
+    }
+    return ant[n];
+  }
+
+  // Dois grupos "quase iguais" provavelmente são erro de digitação ("Beatriz" x "Beatris").
+  // Não acusa grupos que só diferem no número ("Casal 1" x "Casal 2") nem nomes muito curtos.
+  function quaseIguais(a, b) {
+    if (a.replace(/\d+/g, '#') === b.replace(/\d+/g, '#')) return false;
+    const maior = Math.max(a.length, b.length);
+    if (maior < 4) return false;
+    return distancia(a, b) <= Math.min(3, Math.max(1, Math.floor(maior / 6)));
+  }
+
+  // Divide texto colado do Excel/Sheets ou CSV em linhas { nome, tel, grupo }.
+  function linhasDeTexto(texto) {
+    const linhas = String(texto || '').split(/\r?\n/).filter(l => l.trim());
+    if (linhas.length && /^\s*nome/i.test(linhas[0])) linhas.shift(); // cabeçalho
+    return linhas.map(l => {
+      const sep = l.includes('\t') ? '\t' : l.includes(';') ? ';' : ',';
+      const [nome = '', tel = '', grupo = ''] = l.split(sep).map(x => x.trim());
+      return { nome, tel, grupo };
     });
-    if (!erros.length && pessoas.length < 3) erros.push('São necessárias pelo menos 3 pessoas.');
-    return { pessoas, erros };
+  }
+
+  // Valida as linhas da tabela. erros impedem o sorteio; avisos pedem conferência.
+  // ignorar: lista de pares de grupos "a|b" que o organizador confirmou serem diferentes.
+  function validar(linhas, ignorar = []) {
+    const pessoas = [], erros = [], avisos = [], gruposPorChave = new Map();
+    const nomes = new Map(), tels = new Map();
+    linhas.forEach((l, i) => {
+      const nome = String(l.nome || '').replace(/\s+/g, ' ').trim();
+      const rotulo = String(l.grupo || '').replace(/\s+/g, ' ').trim();
+      if (!nome && !String(l.tel || '').trim() && !rotulo) return; // linha vazia
+      if (!nome) erros.push({ linha: i, campo: 'nome', msg: 'Falta o nome.' });
+      else {
+        const k = nome.toLowerCase();
+        if (nomes.has(k)) erros.push({ linha: i, campo: 'nome', msg: `Nome repetido (linha ${nomes.get(k) + 1}). Diferencie, ex.: "João Pai" e "João Filho".` });
+        else nomes.set(k, i);
+      }
+      const t = analisarTelefone(l.tel);
+      if (t.erro) erros.push({ linha: i, campo: 'tel', msg: t.erro });
+      else {
+        if (t.aviso) avisos.push({ linha: i, campo: 'tel', msg: t.aviso });
+        if (tels.has(t.numero)) avisos.push({ linha: i, campo: 'tel', msg: `Mesmo telefone de ${tels.get(t.numero)}: os dois links vão para o mesmo celular.` });
+        else tels.set(t.numero, nome || `linha ${i + 1}`);
+      }
+      const chave = normalizarGrupo(rotulo);
+      if (chave) {
+        if (!gruposPorChave.has(chave)) gruposPorChave.set(chave, { chave, rotulo, membros: [] });
+        gruposPorChave.get(chave).membros.push({ linha: i, nome: nome || `linha ${i + 1}` });
+      }
+      pessoas.push({ nome, telefone: t.numero || '', grupo: chave, linha: i });
+    });
+
+    const grupos = [...gruposPorChave.values()];
+    const suspeitos = [];
+    for (let x = 0; x < grupos.length; x++) for (let y = x + 1; y < grupos.length; y++) {
+      const a = grupos[x], b = grupos[y];
+      const par = [a.chave, b.chave].sort().join('|');
+      if (!ignorar.includes(par) && quaseIguais(a.chave, b.chave)) suspeitos.push({ a, b, par });
+    }
+    const emSuspeita = new Set(suspeitos.flatMap(p => [p.a.chave, p.b.chave]));
+    const sozinhos = grupos.filter(g => g.membros.length === 1 && !emSuspeita.has(g.chave));
+
+    if (!erros.length && pessoas.length < 3) erros.push({ linha: -1, campo: '', msg: 'São necessárias pelo menos 3 pessoas.' });
+    return { pessoas, erros, avisos, grupos, suspeitos, sozinhos };
+  }
+
+  // Compatibilidade: valida a partir de texto e devolve erros como mensagens.
+  function parse(texto) {
+    const r = validar(linhasDeTexto(texto));
+    return { ...r, erros: r.erros.map(e => (e.linha >= 0 ? `Linha ${e.linha + 1}: ` : '') + e.msg) };
   }
 
   // ---------- Sorteio ----------
@@ -151,7 +242,7 @@
   }
 
   const api = {
-    normalizarTelefone, parse, embaralhar, sortear,
+    analisarTelefone, normalizarTelefone, normalizarGrupo, quaseIguais, linhasDeTexto, validar, parse, embaralhar, sortear,
     selar, abrir, cifrarComSenha, decifrarComSenha, mensagem,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

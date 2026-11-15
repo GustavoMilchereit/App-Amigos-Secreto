@@ -22,9 +22,8 @@
   .sub { color: var(--muted); margin: 0 0 24px; }
   section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 18px; }
   label { display: block; font-weight: 600; font-size: .9rem; margin: 10px 0 4px; }
-  input, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
     background: var(--bg); color: var(--text); font: inherit; }
-  textarea { min-height: 220px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
   button, .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px;
@@ -45,6 +44,31 @@
   tr.sent td:first-child::after { content: " ✓"; color: var(--accent-2); }
   .hidden { display: none; }
   .table-wrap { overflow-x: auto; }
+  .contador { font-weight: 500; color: var(--muted); font-size: .9rem; }
+  .ajuda { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .ajuda > div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: .86rem; }
+  .ajuda p { margin: 6px 0 0; color: var(--muted); }
+  .ajuda .ex { color: var(--text); font-size: .82rem; }
+  .grade { display: grid; grid-template-columns: 26px 1.3fr 1fr 1.1fr 34px; gap: 8px; align-items: start; }
+  .grade.cab { font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 0 0 6px; }
+  .lin { padding: 6px 0; border-top: 1px solid var(--line); }
+  .lin .num { color: var(--muted); font-size: .85rem; padding-top: 11px; text-align: right; }
+  .lin input { padding: 8px 10px; }
+  .lin input.bad { border-color: var(--accent); }
+  .lin input.meh { border-color: #d49a00; }
+  .st { font-size: .76rem; line-height: 1.3; margin-top: 3px; min-height: 1em; color: var(--muted); }
+  .st.ok { color: var(--accent-2); } .st.bad { color: var(--accent); } .st.meh { color: var(--warn); }
+  .lin .del { padding: 7px 0; width: 34px; justify-content: center; color: var(--muted); }
+  .alerta { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-top: 12px; font-size: .9rem; }
+  .alerta .actions { margin-top: 8px; gap: 6px; }
+  .alerta button { padding: 6px 10px; font-size: .84rem; }
+  @media (max-width: 640px) {
+    .ajuda { grid-template-columns: 1fr; }
+    .grade.cab { display: none; }
+    .grade.lin { grid-template-columns: 22px 1fr 1fr 34px; grid-template-areas: "n nome nome x" ". tel grupo ."; }
+    .lin .num { grid-area: n; } .lin .c-nome { grid-area: nome; } .lin .c-tel { grid-area: tel; }
+    .lin .c-grupo { grid-area: grupo; } .lin .del { grid-area: x; }
+  }
 </style>
 </head>
 <body>
@@ -66,16 +90,36 @@
   </section>
 
   <section id="sec-pessoas">
-    <h2>2. Participantes</h2>
-    <p class="hint" style="margin-top:0">Uma pessoa por linha: <b>Nome; Telefone; Grupo</b>. O grupo é opcional: pessoas do mesmo grupo (casal, pais e filhos pequenos) <b>não tiram umas às outras</b>. Também dá para colar direto do Excel ou do Google Sheets.</p>
-    <textarea id="pessoas" spellcheck="false" placeholder="Maria Silva; (11) 98765-4321; casal1
-João Silva; 11 91234-5678; casal1
-Ana Souza; 21999998888
-..."></textarea>
-    <div class="actions">
-      <label class="btn" style="margin:0">📄 Carregar CSV<input type="file" id="csv" accept=".csv,.txt" class="hidden"></label>
-      <button class="primary" id="btn-sortear">🎲 Sortear</button>
+    <h2>2. Participantes <span class="contador" id="contador"></span></h2>
+
+    <div class="ajuda">
+      <div>
+        <b>📞 Telefone</b>
+        <p>Digite como preferir: <b>com ou sem</b> traço, espaço, parênteses no DDD ou +55. O <b>DDD é obrigatório</b>, porque sem ele o WhatsApp não acha o número.</p>
+        <p class="ex">✅ (11) 98765-4321 · 11 98765-4321 · 11987654321 · +55 11 98765-4321<br>❌ 98765-4321 (sem DDD)</p>
+        <p>Número do exterior: comece com + e o código do país (ex.: +1 415 555 0100).</p>
+      </div>
+      <div>
+        <b>👥 Grupo (opcional)</b>
+        <p>Pessoas do mesmo grupo <b>não tiram umas às outras</b> (casais, pais e filhos pequenos). O grupo precisa estar escrito <b>igual</b> para todos. Um erro de digitação separa o casal:</p>
+        <p class="ex">"Casal Gustavo e Beatriz" ≠ "Casal Gustavo e Beatris" → viram 2 grupos, e o casal pode se tirar.</p>
+        <p>Para evitar: <b>escolha o grupo na lista</b> que aparece ao digitar e confira o "com: …" embaixo. Maiúsculas, acentos e espaços extras são ignorados. Grupos parecidos e grupos de uma pessoa só geram alerta.</p>
+      </div>
     </div>
+
+    <div class="grade cab" aria-hidden="true"><span>#</span><span>Nome completo</span><span>Telefone</span><span>Grupo</span><span></span></div>
+    <div id="linhas"></div>
+    <datalist id="lista-grupos"></datalist>
+
+    <div class="actions">
+      <button id="btn-add">＋ Adicionar pessoa</button>
+      <label class="btn" style="margin:0">📄 Carregar CSV<input type="file" id="csv" accept=".csv,.txt" class="hidden"></label>
+      <button id="btn-limpar">🗑 Limpar tabela</button>
+    </div>
+    <p class="hint">Dica: dá para copiar as 3 colunas do Excel ou do Google Sheets e colar na primeira célula de nome.</p>
+
+    <div id="alertas"></div>
+    <div class="actions"><button class="primary" id="btn-sortear">🎲 Sortear</button></div>
     <div id="feedback"></div>
   </section>
 
@@ -99,7 +143,7 @@ Ana Souza; 21999998888
 <script>
 const $ = (id) => document.getElementById(id);
 const STORE = 'amigo-secreto-v3';
-const fields = ['ev-nome', 'ev-data', 'ev-valor', 'ev-url', 'pessoas'];
+const fields = ['ev-nome', 'ev-data', 'ev-valor', 'ev-url'];
 try { ['amigo-secreto-v1', 'amigo-secreto-v2'].forEach(k => localStorage.removeItem(k)); } catch {} // formatos antigos
 
 function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
@@ -151,11 +195,150 @@ function render() {
   if (!base) feedback('Preencha o <b>endereço da página de revelação</b> no passo 1. Sem ele, os links não funcionam.', 'err');
 }
 
+
+// ---------- Tabela de participantes ----------
+let linhas = [];
+let ignorados = [];
+
+function linhaVazia() { return { nome: '', tel: '', grupo: '' }; }
+function salvarLinhas() { save({ linhas, ignorados }); }
+function validarTabela() { return AmigoSecreto.validar(linhas, ignorados); }
+
+function garantirLinhaFinal() {
+  const ult = linhas[linhas.length - 1];
+  if (!ult || ult.nome || ult.tel || ult.grupo) { linhas.push(linhaVazia()); return true; }
+  return false;
+}
+
+function montarLinhas() {
+  garantirLinhaFinal();
+  const box = $('linhas'); box.innerHTML = '';
+  linhas.forEach((l, i) => box.appendChild(criarLinha(i)));
+  atualizarStatus();
+}
+
+function criarLinha(i) {
+  const l = linhas[i];
+  const div = document.createElement('div');
+  div.className = 'grade lin'; div.dataset.i = i;
+  div.innerHTML = `<span class="num">${i + 1}</span>
+    <div class="c-nome"><input data-f="nome" placeholder="Nome completo" autocomplete="off"><div class="st"></div></div>
+    <div class="c-tel"><input data-f="tel" placeholder="(11) 98765-4321" inputmode="tel" autocomplete="off"><div class="st"></div></div>
+    <div class="c-grupo"><input data-f="grupo" placeholder="Opcional" list="lista-grupos" autocomplete="off"><div class="st"></div></div>
+    <button class="del" title="Remover pessoa" aria-label="Remover pessoa">✕</button>`;
+  div.querySelectorAll('input').forEach(inp => {
+    inp.value = l[inp.dataset.f];
+    inp.addEventListener('input', () => {
+      linhas[+div.dataset.i][inp.dataset.f] = inp.value;
+      if (garantirLinhaFinal()) $('linhas').appendChild(criarLinha(linhas.length - 1));
+      salvarLinhas(); atualizarStatus();
+    });
+    inp.addEventListener('paste', (e) => {
+      const txt = (e.clipboardData || window.clipboardData).getData('text');
+      if (!/[\t\n]/.test(txt.trim())) return; // colagem simples de um campo
+      e.preventDefault();
+      const novas = AmigoSecreto.linhasDeTexto(txt);
+      let pos = +div.dataset.i;
+      novas.forEach(n => { linhas[pos] = n; pos++; });
+      salvarLinhas(); montarLinhas();
+      feedback(`${novas.length} pessoa(s) coladas. Confira os alertas de cada linha.`, 'ok');
+    });
+  });
+  div.querySelector('.del').onclick = () => {
+    linhas.splice(+div.dataset.i, 1);
+    salvarLinhas(); montarLinhas();
+  };
+  return div;
+}
+
+function atualizarStatus() {
+  const v = validarTabela();
+  const porLinha = {};
+  const marca = (i, campo, tipo, msg) => {
+    const k = i + ':' + campo;
+    if (!porLinha[k] || tipo === 'bad') porLinha[k] = { tipo, msg };
+  };
+  v.avisos.forEach(a => marca(a.linha, a.campo, 'meh', '⚠ ' + a.msg));
+  v.erros.forEach(e => { if (e.linha >= 0) marca(e.linha, e.campo, 'bad', '✕ ' + e.msg); });
+
+  const grupoDaLinha = {};
+  v.grupos.forEach(g => g.membros.forEach(m => { grupoDaLinha[m.linha] = g; }));
+  const suspeitos = new Set(v.suspeitos.flatMap(p => [p.a.chave, p.b.chave]));
+
+  document.querySelectorAll('#linhas .lin').forEach(div => {
+    const i = +div.dataset.i, l = linhas[i];
+    const vazia = !l.nome.trim() && !l.tel.trim() && !l.grupo.trim();
+    const set = (campo, tipo, msg) => {
+      const inp = div.querySelector(`[data-f="${campo}"]`), st = inp.nextElementSibling;
+      inp.className = tipo === 'bad' || tipo === 'meh' ? tipo : '';
+      st.className = 'st ' + (tipo || ''); st.textContent = msg || '';
+    };
+    if (vazia) { ['nome', 'tel', 'grupo'].forEach(c => set(c, '', '')); return; }
+    const pn = porLinha[i + ':nome']; set('nome', pn && pn.tipo, pn && pn.msg);
+    const pt = porLinha[i + ':tel'];
+    if (pt) set('tel', pt.tipo, pt.msg);
+    else set('tel', 'ok', '✓ ' + AmigoSecreto.analisarTelefone(l.tel).exibir);
+    const g = grupoDaLinha[i];
+    if (!g) set('grupo', '', 'sem grupo');
+    else {
+      const outros = g.membros.filter(m => m.linha !== i).map(m => m.nome.split(' ')[0]);
+      if (suspeitos.has(g.chave)) set('grupo', 'meh', '⚠ parecido com outro grupo (veja abaixo)');
+      else if (!outros.length) set('grupo', 'meh', '⚠ ninguém mais neste grupo');
+      else set('grupo', 'ok', '✓ com: ' + outros.join(', '));
+    }
+  });
+
+  // Lista de grupos para escolher ao digitar.
+  $('lista-grupos').innerHTML = v.grupos.map(g => `<option value="${esc(g.rotulo)}">`).join('');
+  const n = v.pessoas.length;
+  $('contador').textContent = n ? `(${n} ${n === 1 ? 'pessoa' : 'pessoas'})` : '';
+
+  // Alertas de grupo com ações.
+  const box = $('alertas'); box.innerHTML = '';
+  v.suspeitos.forEach(p => {
+    const d = document.createElement('div'); d.className = 'alerta';
+    d.innerHTML = `⚠ Os grupos <b>"${esc(p.a.rotulo)}"</b> (${esc(p.a.membros.map(m => m.nome.split(' ')[0]).join(', '))}) e <b>"${esc(p.b.rotulo)}"</b> (${esc(p.b.membros.map(m => m.nome.split(' ')[0]).join(', '))}) são quase iguais. Erro de digitação?<div class="actions"></div>`;
+    const acoes = d.querySelector('.actions');
+    const btn = (txt, fn) => { const b = document.createElement('button'); b.textContent = txt; b.onclick = fn; acoes.appendChild(b); };
+    btn(`Usar "${p.a.rotulo}" para todos`, () => unificar(p.b.chave, p.a.rotulo));
+    btn(`Usar "${p.b.rotulo}" para todos`, () => unificar(p.a.chave, p.b.rotulo));
+    btn('São grupos diferentes', () => { ignorados.push(p.par); salvarLinhas(); atualizarStatus(); });
+    box.appendChild(d);
+  });
+  if (v.sozinhos.length) {
+    const d = document.createElement('div'); d.className = 'alerta';
+    d.innerHTML = '⚠ ' + v.sozinhos.map(g => `<b>"${esc(g.rotulo)}"</b> só tem ${esc(g.membros[0].nome.split(' ')[0])}`).join('; ') +
+      '. Grupo serve para impedir que pessoas se tirem, então precisa de 2 ou mais. Confira se não é erro de digitação, ou apague o grupo dessa pessoa.';
+    box.appendChild(d);
+  }
+}
+
+function unificar(chaveDe, rotuloPara) {
+  linhas.forEach(l => { if (AmigoSecreto.normalizarGrupo(l.grupo) === chaveDe) l.grupo = rotuloPara; });
+  salvarLinhas(); montarLinhas();
+}
+
+$('btn-add').onclick = () => {
+  linhas.push(linhaVazia()); salvarLinhas(); montarLinhas();
+  const ins = document.querySelectorAll('#linhas .lin input[data-f="nome"]');
+  ins[ins.length - 2 >= 0 ? ins.length - 2 : 0].focus();
+};
+$('btn-limpar').onclick = () => {
+  if (!confirm('Apagar todos os participantes da tabela?')) return;
+  linhas = []; ignorados = []; salvarLinhas(); montarLinhas(); feedback('');
+};
+
 $('btn-sortear').onclick = async () => {
   const st = load();
   if (st.envio && !confirm('Já existe um sorteio. Sortear de novo invalida os links enviados. Continuar?')) return;
-  const { pessoas, erros } = AmigoSecreto.parse($('pessoas').value);
-  if (erros.length) return feedback(erros.map(esc).join('<br>'), 'err');
+  const v = validarTabela();
+  if (v.erros.length) {
+    const lista = v.erros.slice(0, 8).map(e => (e.linha >= 0 ? `Linha ${e.linha + 1}: ` : '') + esc(e.msg)).join('<br>');
+    return feedback(`Corrija antes de sortear:<br>${lista}${v.erros.length > 8 ? '<br>…' : ''}`, 'err');
+  }
+  const pendentes = v.suspeitos.length + v.sozinhos.length;
+  if (pendentes && !confirm(`Há ${pendentes} alerta(s) de grupo sem resolver. Um erro de grupo pode fazer um casal se tirar. Sortear mesmo assim?`)) return;
+  const pessoas = v.pessoas;
   if (!$('ev-nome').value.trim()) { $('ev-nome').focus(); return feedback('Dê um nome ao amigo secreto no passo 1. Ele aparece na mensagem e na página de cada pessoa.', 'err'); }
   try {
     $('btn-sortear').disabled = true;
@@ -196,6 +379,7 @@ $('arq-backup').onchange = async (e) => {
     const st = await AmigoSecreto.decifrarComSenha(await f.text(), senha);
     localStorage.setItem(STORE, JSON.stringify(st));
     fields.forEach(k => { if (st[k] != null) $(k).value = st[k]; });
+    linhas = st.linhas || []; ignorados = st.ignorados || []; montarLinhas();
     feedback('Backup restaurado.', 'ok'); render();
   } catch { feedback('Senha incorreta ou arquivo inválido.', 'err'); }
   e.target.value = '';
@@ -203,8 +387,11 @@ $('arq-backup').onchange = async (e) => {
 
 $('csv').onchange = async (e) => {
   const f = e.target.files[0]; if (!f) return;
-  $('pessoas').value = (await f.text()).replace(/^nome[^\n]*\n/i, '');
-  save();
+  const novas = AmigoSecreto.linhasDeTexto(await f.text());
+  const temDados = linhas.some(l => l.nome || l.tel || l.grupo);
+  if (temDados && !confirm(`Substituir a tabela atual pelas ${novas.length} pessoas do arquivo?`)) { e.target.value = ''; return; }
+  linhas = novas; salvarLinhas(); montarLinhas(); e.target.value = '';
+  feedback(`${novas.length} pessoa(s) carregadas do arquivo. Confira os alertas de cada linha.`, 'ok');
 };
 
 fields.forEach(f => $(f).addEventListener('input', () => { save(); if (f === 'ev-url') render(); }));
@@ -212,6 +399,10 @@ fields.forEach(f => $(f).addEventListener('input', () => { save(); if (f === 'ev
 (function init() {
   const st = load();
   fields.forEach(f => { if (st[f] != null) $(f).value = st[f]; });
+  // Migra a lista antiga (texto) para a tabela.
+  linhas = st.linhas || (st.pessoas ? AmigoSecreto.linhasDeTexto(st.pessoas) : []);
+  ignorados = st.ignorados || [];
+  montarLinhas();
   render();
 })();
 </script>

@@ -25,7 +25,35 @@ Vera; 5551966660000`;
   assert.strictEqual(pessoas[0].telefone, '5511987654321');
   assert.strictEqual(pessoas[14].telefone, '5551966660000');
   assert.ok(A.parse('Ana; 11999998888\nana; 11988887777\nBia; 11977776666').erros[0].includes('repetido'));
-  assert.ok(A.parse('Ana\nBia; 11977776666\nCid; 11977776665').erros[0].includes('sem telefone'));
+  assert.ok(A.parse('Ana\nBia; 11977776666\nCid; 11977776665').erros[0].includes('Falta o telefone'));
+
+  // ---------- Telefone: qualquer formatação, DDD obrigatório ----------
+  for (const t of ['(11) 98765-4321', '11 98765-4321', '11987654321', '11 9 8765 4321', '+55 (11) 98765-4321', '5511987654321', '011 98765-4321'])
+    assert.strictEqual(A.analisarTelefone(t).numero, '5511987654321', t);
+  assert.ok(A.analisarTelefone('98765-4321').erro.includes('DDD'));
+  assert.ok(A.analisarTelefone('(10) 98765-4321').erro.includes('não existe'));
+  assert.ok(A.analisarTelefone('(11) 8765-4321').aviso.includes('Falta o 9'));
+  assert.ok(A.analisarTelefone('(11) 3456-7890').aviso.includes('fixo'));
+  assert.ok(A.analisarTelefone('').erro);
+
+  // ---------- Grupos ----------
+  const g = (txt) => A.validar(A.linhasDeTexto(txt));
+  // Maiúsculas, acentos e espaços extras não criam grupo novo.
+  let v = g('Gustavo; 11987650001; Família Silva\nBeatriz; 11987650002;  familia   SILVA \nAna; 11987650003');
+  assert.strictEqual(v.grupos.length, 1); assert.strictEqual(v.grupos[0].membros.length, 2);
+  assert.deepStrictEqual(v.suspeitos, []); assert.deepStrictEqual(v.sozinhos, []);
+  // Erro de digitação: vira alerta de grupos quase iguais.
+  v = g('Gustavo; 11987650001; Casal Gustavo e Beatriz\nBeatriz; 11987650002; Casal Gustavo e Beatris\nAna; 11987650003');
+  assert.strictEqual(v.suspeitos.length, 1);
+  // Organizador confirma que são diferentes: alerta some, sobram os grupos de uma pessoa só.
+  v = A.validar(A.linhasDeTexto('Gustavo; 11987650001; Casal Gustavo e Beatriz\nBeatriz; 11987650002; Casal Gustavo e Beatris\nAna; 11987650003'), [v.suspeitos[0].par]);
+  assert.strictEqual(v.suspeitos.length, 0); assert.strictEqual(v.sozinhos.length, 2);
+  // "Casal 1" x "Casal 2" são grupos legítimos.
+  v = g('A; 11987650001; Casal 1\nB; 11987650002; Casal 1\nC; 11987650003; Casal 2\nD; 11987650004; Casal 2');
+  assert.deepStrictEqual(v.suspeitos, []);
+  // Mesmo telefone em duas pessoas gera aviso.
+  v = g('A; 11987650001\nB; (11) 98765-0001\nC; 11987650003');
+  assert.ok(v.avisos.some(a => a.msg.includes('Mesmo telefone')));
 
   // ---------- Regras do sorteio ----------
   for (let k = 0; k < 2000; k++) {
