@@ -51,6 +51,30 @@ Vera; 5551966660000`;
   // "Casal 1" x "Casal 2" são grupos legítimos.
   v = g('A; 11987650001; Casal 1\nB; 11987650002; Casal 1\nC; 11987650003; Casal 2\nD; 11987650004; Casal 2');
   assert.deepStrictEqual(v.suspeitos, []);
+  // Vários grupos por pessoa.
+  assert.deepStrictEqual(A.separarGrupos('Casal G e B, família M ,  Família  M, '), ['Casal G e B', 'família M']);
+  v = g(`Gustavo; 11987650001; Casal Gustavo e Beatriz, Família Milchereit
+Beatriz; 11987650002; Casal Gustavo e Beatriz
+Maria; 11987650003; Família Milchereit
+Pedro; 11987650004; Família Milchereit
+Ana; 11987650005
+Bia; 11987650006
+Caio; 11987650007
+Davi; 11987650008`);
+  assert.deepStrictEqual(v.erros, []); assert.deepStrictEqual(v.sozinhos, []); assert.deepStrictEqual(v.suspeitos, []);
+  assert.deepStrictEqual(v.pessoas[0].grupos, ['casal gustavo e beatriz', 'familia milchereit']);
+  for (let k = 0; k < 2000; k++) {
+    const r = A.sortear(v.pessoas), m = new Map(r.map(x => [x.de.nome, x.para.nome]));
+    for (const [x, y] of [['Gustavo', 'Beatriz'], ['Gustavo', 'Maria'], ['Gustavo', 'Pedro'], ['Maria', 'Pedro']]) {
+      assert.notStrictEqual(m.get(x), y, `${x} não pode tirar ${y}`); assert.notStrictEqual(m.get(y), x, `${y} não pode tirar ${x}`);
+    }
+    // Beatriz e Maria NÃO estão no mesmo grupo: podem se tirar.
+  }
+  // Colunas extras no Excel viram grupos adicionais.
+  assert.strictEqual(A.linhasDeTexto('Gustavo\t11987650001\tCasal\tFamília')[0].grupo, 'Casal, Família');
+  // Pessoa em grupo com todo mundo: erro claro em vez de travar.
+  assert.throws(() => A.sortear(A.validar(A.linhasDeTexto('A;11987650001;g1,g2\nB;11987650002;g1\nC;11987650003;g2\nD;11987650004;g1')).pessoas));
+
   // Mesmo telefone em duas pessoas gera aviso.
   v = g('A; 11987650001\nB; (11) 98765-0001\nC; 11987650003');
   assert.ok(v.avisos.some(a => a.msg.includes('Mesmo telefone')));
@@ -62,7 +86,7 @@ Vera; 5551966660000`;
     assert.strictEqual(new Set(r.map(p => p.para.nome)).size, 15, 'cada um recebe exatamente um presente');
     r.forEach(p => {
       assert.notStrictEqual(p.de.nome, p.para.nome, 'ninguém tira a si mesmo');
-      if (p.de.grupo) assert.notStrictEqual(p.de.grupo, p.para.grupo, 'ninguém tira do próprio grupo');
+      assert.ok(!p.de.grupos.some(g => p.para.grupos.includes(g)), 'ninguém tira do próprio grupo');
     });
     const m = new Map(r.map(p => [p.de.nome, p.para.nome]));
     let cur = r[0].de.nome, n = 0; do { cur = m.get(cur); n++; } while (cur !== r[0].de.nome && n < 99);
@@ -72,7 +96,7 @@ Vera; 5551966660000`;
 
   // ---------- Aleatoriedade: ninguém é favorecido, nem pela ordem da lista ----------
   const N = 15, RUNS = 30000, esperado = RUNS / (N - 1);
-  const semGrupo = pessoas.map(p => ({ ...p, grupo: '' }));
+  const semGrupo = pessoas.map(p => ({ ...p, grupos: [] }));
   const idx = new Map(semGrupo.map((p, i) => [p, i]));
   const cont = Array.from({ length: N }, () => new Array(N).fill(0));
   for (let r = 0; r < RUNS; r++) for (const par of A.sortear(semGrupo)) cont[idx.get(par.de)][idx.get(par.para)]++;

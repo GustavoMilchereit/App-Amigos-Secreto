@@ -41,6 +41,7 @@
   th { color: var(--muted); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
   td .actions { margin: 0; gap: 6px; }
   td .btn, td button { padding: 6px 10px; font-size: .85rem; }
+  button.copiado { background: color-mix(in srgb, var(--accent-2) 15%, transparent); border-color: var(--accent-2); color: var(--accent-2); }
   tr.sent td:first-child::after { content: " ✓"; color: var(--accent-2); }
   .hidden { display: none; }
   .table-wrap { overflow-x: auto; }
@@ -49,13 +50,21 @@
   .ajuda > div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: .86rem; }
   .ajuda p { margin: 6px 0 0; color: var(--muted); }
   .ajuda .ex { color: var(--text); font-size: .82rem; }
-  .grade { display: grid; grid-template-columns: 26px 1.3fr 1fr 1.1fr 34px; gap: 8px; align-items: start; }
+  .grade { display: grid; grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.2fr) 34px; gap: 8px; align-items: start; }
   .grade.cab { font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 0 0 6px; }
   .lin { padding: 6px 0; border-top: 1px solid var(--line); }
   .lin .num { color: var(--muted); font-size: .85rem; padding-top: 11px; text-align: right; }
   .lin input { padding: 8px 10px; }
-  .lin input.bad { border-color: var(--accent); }
-  .lin input.meh { border-color: #d49a00; }
+  .lin input.bad, .tags.bad { border-color: var(--accent); }
+  .lin input.meh, .tags.meh { border-color: #d49a00; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 40px; padding: 4px 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); cursor: text; }
+  .tags .ent { flex: 1; min-width: 90px; border: 0; padding: 4px; background: transparent; outline: none; }
+  .tag { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 2px 4px 2px 9px; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-2) 16%, transparent); color: var(--text); font-size: .82rem; line-height: 1.4; }
+  .tag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  .tag button { border: 0; background: none; padding: 0 5px; font-size: 1rem; line-height: 1; color: inherit; cursor: pointer; }
   .st { font-size: .76rem; line-height: 1.3; margin-top: 3px; min-height: 1em; color: var(--muted); }
   .st.ok { color: var(--accent-2); } .st.bad { color: var(--accent); } .st.meh { color: var(--warn); }
   .lin .del { padding: 7px 0; width: 34px; justify-content: center; color: var(--muted); }
@@ -65,7 +74,7 @@
   @media (max-width: 640px) {
     .ajuda { grid-template-columns: 1fr; }
     .grade.cab { display: none; }
-    .grade.lin { grid-template-columns: 22px 1fr 1fr 34px; grid-template-areas: "n nome nome x" ". tel grupo ."; }
+    .grade.lin { grid-template-columns: 22px minmax(0, 1fr) 34px; grid-template-areas: "n nome x" ". tel ." ". grupo ."; row-gap: 6px; }
     .lin .num { grid-area: n; } .lin .c-nome { grid-area: nome; } .lin .c-tel { grid-area: tel; }
     .lin .c-grupo { grid-area: grupo; } .lin .del { grid-area: x; }
   }
@@ -104,7 +113,8 @@
         <b>👥 Grupo (opcional)</b>
         <p>Pessoas do mesmo grupo <b>não tiram umas às outras</b> (casais, pais e filhos pequenos). O grupo precisa estar escrito <b>igual</b> para todos. Um erro de digitação separa o casal:</p>
         <p class="ex">"Casal Gustavo e Beatriz" ≠ "Casal Gustavo e Beatris" → viram 2 grupos, e o casal pode se tirar.</p>
-        <p>Para evitar: <b>escolha o grupo na lista</b> que aparece ao digitar e confira o "com: …" embaixo. Maiúsculas, acentos e espaços extras são ignorados. Grupos parecidos e grupos de uma pessoa só geram alerta.</p>
+        <p>Para evitar: <b>escolha o grupo na lista</b> que aparece ao digitar e confira o "não tira: …" embaixo. Maiúsculas, acentos e espaços extras são ignorados. Grupos parecidos e grupos de uma pessoa só geram alerta.</p>
+        <p><b>Mais de um grupo:</b> digite o grupo e aperte <b>Enter</b> (ou vírgula), depois digite o próximo. Ex.: Gustavo em "Casal Gustavo e Beatriz" e em "Pais e filhos Milchereit".</p>
       </div>
     </div>
 
@@ -142,7 +152,7 @@
   <p class="hint" style="text-align:center">Use "Começar do zero" para organizar outro amigo secreto neste mesmo navegador. Antes, termine de enviar os links do atual.</p>
 </main>
 
-<script src="sorteio.js"></script>
+<script src="sorteio.js?v=9"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const STORE = 'amigo-secreto-v3';
@@ -167,6 +177,33 @@ function baseUrl() {
   return u;
 }
 
+// Copia para a área de transferência. Pode ser usado quantas vezes quiser: o botão
+// mostra "Copiado!" por 2 segundos e volta ao normal.
+async function copiar(texto) {
+  try { await navigator.clipboard.writeText(texto); return true; } catch {}
+  try { // alternativa para navegadores que bloqueiam a API moderna
+    const ta = document.createElement('textarea');
+    ta.value = texto; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, texto.length);
+    const ok = document.execCommand('copy'); ta.remove(); if (ok) return true;
+  } catch {}
+  prompt('Não consegui copiar sozinho. Selecione o texto abaixo e copie:', texto);
+  return false;
+}
+function botaoCopiar(box, rotulo, texto, aoCopiar) {
+  const b = document.createElement('button');
+  b.textContent = rotulo;
+  b.onclick = async () => {
+    aoCopiar && aoCopiar();
+    if (await copiar(texto)) {
+      clearTimeout(b._t); b.textContent = '✅ Copiado!'; b.classList.add('copiado');
+      b._t = setTimeout(() => { b.textContent = rotulo; b.classList.remove('copiado'); }, 2000);
+    }
+  };
+  box.appendChild(b);
+  return b;
+}
+
 function render() {
   const st = load(), envio = st.envio;
   $('sec-links').classList.toggle('hidden', !envio);
@@ -189,10 +226,8 @@ function render() {
     };
     mk('WhatsApp', `https://wa.me/${it.telefone}?text=${encodeURIComponent(texto)}`, 'wa');
     mk('SMS', `sms:+${it.telefone}?&body=${encodeURIComponent(texto)}`);
-    const cp = document.createElement('button');
-    cp.textContent = 'Copiar';
-    cp.onclick = async () => { marcar(); try { await navigator.clipboard.writeText(texto); cp.textContent = 'Copiado'; } catch { prompt('Copie a mensagem:', texto); } };
-    box.appendChild(cp);
+    botaoCopiar(box, 'Copiar mensagem', texto, marcar);
+    botaoCopiar(box, 'Copiar link', link, marcar);
     $('tabela').appendChild(tr);
   });
   if (!base) feedback('Preencha o <b>endereço da página de revelação</b> no passo 1. Sem ele, os links não funcionam.', 'err');
@@ -220,19 +255,22 @@ function montarLinhas() {
   atualizarStatus();
 }
 
+function gruposDe(l) { return AmigoSecreto.separarGrupos(l.grupo); }
+
 function criarLinha(i) {
-  const l = linhas[i];
   const div = document.createElement('div');
   div.className = 'grade lin'; div.dataset.i = i;
   div.innerHTML = `<span class="num">${i + 1}</span>
     <div class="c-nome"><input data-f="nome" placeholder="Nome completo" autocomplete="off"><div class="st"></div></div>
     <div class="c-tel"><input data-f="tel" placeholder="(11) 98765-4321" inputmode="tel" autocomplete="off"><div class="st"></div></div>
-    <div class="c-grupo"><input data-f="grupo" placeholder="Opcional" list="lista-grupos" autocomplete="off"><div class="st"></div></div>
+    <div class="c-grupo"><div class="tags"><input class="ent" placeholder="Opcional" list="lista-grupos" autocomplete="off" enterkeyhint="done" aria-label="Adicionar grupo"></div><div class="st"></div></div>
     <button class="del" title="Remover pessoa" aria-label="Remover pessoa">✕</button>`;
-  div.querySelectorAll('input').forEach(inp => {
-    inp.value = l[inp.dataset.f];
+  const linha = () => linhas[+div.dataset.i];
+
+  div.querySelectorAll('input[data-f]').forEach(inp => {
+    inp.value = linha()[inp.dataset.f];
     inp.addEventListener('input', () => {
-      linhas[+div.dataset.i][inp.dataset.f] = inp.value;
+      linha()[inp.dataset.f] = inp.value;
       if (garantirLinhaFinal()) $('linhas').appendChild(criarLinha(linhas.length - 1));
       salvarLinhas(); atualizarStatus();
     });
@@ -247,6 +285,38 @@ function criarLinha(i) {
       feedback(`${novas.length} pessoa(s) coladas. Confira os alertas de cada linha.`, 'ok');
     });
   });
+
+  // Grupos como etiquetas: digite e aperte Enter (ou vírgula) para adicionar; × remove.
+  const tags = div.querySelector('.tags'), ent = div.querySelector('.ent');
+  const desenhar = () => {
+    tags.querySelectorAll('.tag').forEach(t => t.remove());
+    gruposDe(linha()).forEach((g, j) => {
+      const t = document.createElement('span');
+      t.className = 'tag'; t.dataset.chave = AmigoSecreto.normalizarGrupo(g);
+      t.innerHTML = `<span>${esc(g)}</span><button type="button" aria-label="Remover grupo ${esc(g)}">×</button>`;
+      t.querySelector('button').onclick = () => { const gs = gruposDe(linha()); gs.splice(j, 1); definir(gs); };
+      tags.insertBefore(t, ent);
+    });
+    ent.placeholder = gruposDe(linha()).length ? '+ outro grupo' : 'Opcional';
+  };
+  const definir = (gs) => {
+    linha().grupo = AmigoSecreto.separarGrupos(gs.join(',')).join(', ');
+    if (garantirLinhaFinal()) $('linhas').appendChild(criarLinha(linhas.length - 1));
+    salvarLinhas(); desenhar(); atualizarStatus();
+  };
+  const adicionar = () => {
+    const txt = ent.value; ent.value = '';
+    if (txt.trim()) definir([...gruposDe(linha()), ...txt.split(',')]);
+  };
+  ent.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); adicionar(); }
+    else if (e.key === 'Backspace' && !ent.value && gruposDe(linha()).length) { definir(gruposDe(linha()).slice(0, -1)); }
+  });
+  ent.addEventListener('input', () => { if (ent.value.includes(',')) adicionar(); });
+  ent.addEventListener('change', adicionar); // escolha na lista ou ao sair do campo
+  tags.addEventListener('click', (e) => { if (e.target === tags) ent.focus(); });
+  desenhar();
+
   div.querySelector('.del').onclick = () => {
     linhas.splice(+div.dataset.i, 1);
     salvarLinhas(); montarLinhas();
@@ -264,30 +334,38 @@ function atualizarStatus() {
   v.avisos.forEach(a => marca(a.linha, a.campo, 'meh', '⚠ ' + a.msg));
   v.erros.forEach(e => { if (e.linha >= 0) marca(e.linha, e.campo, 'bad', '✕ ' + e.msg); });
 
-  const grupoDaLinha = {};
-  v.grupos.forEach(g => g.membros.forEach(m => { grupoDaLinha[m.linha] = g; }));
+  const gruposDaLinha = {};
+  v.grupos.forEach(g => g.membros.forEach(m => { (gruposDaLinha[m.linha] = gruposDaLinha[m.linha] || []).push(g); }));
   const suspeitos = new Set(v.suspeitos.flatMap(p => [p.a.chave, p.b.chave]));
 
   document.querySelectorAll('#linhas .lin').forEach(div => {
     const i = +div.dataset.i, l = linhas[i];
-    const vazia = !l.nome.trim() && !l.tel.trim() && !l.grupo.trim();
+    const vazia = !l.nome.trim() && !l.tel.trim() && !gruposDe(l).length;
     const set = (campo, tipo, msg) => {
-      const inp = div.querySelector(`[data-f="${campo}"]`), st = inp.nextElementSibling;
-      inp.className = tipo === 'bad' || tipo === 'meh' ? tipo : '';
-      st.className = 'st ' + (tipo || ''); st.textContent = msg || '';
+      const cel = div.querySelector('.c-' + campo);
+      const alvo = campo === 'grupo' ? cel.querySelector('.tags') : cel.querySelector('input');
+      alvo.classList.remove('bad', 'meh'); if (tipo === 'bad' || tipo === 'meh') alvo.classList.add(tipo);
+      const st = cel.querySelector('.st'); st.className = 'st ' + (tipo || ''); st.textContent = msg || '';
     };
     if (vazia) { ['nome', 'tel', 'grupo'].forEach(c => set(c, '', '')); return; }
     const pn = porLinha[i + ':nome']; set('nome', pn && pn.tipo, pn && pn.msg);
     const pt = porLinha[i + ':tel'];
     if (pt) set('tel', pt.tipo, pt.msg);
     else set('tel', 'ok', '✓ ' + AmigoSecreto.analisarTelefone(l.tel).exibir);
-    const g = grupoDaLinha[i];
-    if (!g) set('grupo', '', 'sem grupo');
+
+    const gs = gruposDaLinha[i] || [];
+    div.querySelectorAll('.tag').forEach(t => {
+      const g = gs.find(x => x.chave === t.dataset.chave);
+      t.classList.toggle('warn', !!g && (suspeitos.has(g.chave) || g.membros.length === 1));
+    });
+    if (!gs.length) set('grupo', '', 'sem grupo');
     else {
-      const outros = g.membros.filter(m => m.linha !== i).map(m => m.nome.split(' ')[0]);
-      if (suspeitos.has(g.chave)) set('grupo', 'meh', '⚠ parecido com outro grupo (veja abaixo)');
-      else if (!outros.length) set('grupo', 'meh', '⚠ ninguém mais neste grupo');
-      else set('grupo', 'ok', '✓ com: ' + outros.join(', '));
+      const parecido = gs.find(g => suspeitos.has(g.chave));
+      const sozinho = gs.find(g => g.membros.length === 1 && !suspeitos.has(g.chave));
+      const outros = [...new Set(gs.flatMap(g => g.membros.filter(m => m.linha !== i).map(m => m.nome.split(' ')[0])))];
+      if (parecido) set('grupo', 'meh', `⚠ "${parecido.rotulo}" parecido com outro grupo (veja abaixo)`);
+      else if (sozinho) set('grupo', 'meh', `⚠ ninguém mais em "${sozinho.rotulo}"`);
+      else set('grupo', 'ok', '✓ não tira: ' + outros.join(', '));
     }
   });
 
@@ -298,9 +376,10 @@ function atualizarStatus() {
 
   // Alertas de grupo com ações.
   const box = $('alertas'); box.innerHTML = '';
+  const primeiros = (g) => esc(g.membros.map(m => m.nome.split(' ')[0]).join(', '));
   v.suspeitos.forEach(p => {
     const d = document.createElement('div'); d.className = 'alerta';
-    d.innerHTML = `⚠ Os grupos <b>"${esc(p.a.rotulo)}"</b> (${esc(p.a.membros.map(m => m.nome.split(' ')[0]).join(', '))}) e <b>"${esc(p.b.rotulo)}"</b> (${esc(p.b.membros.map(m => m.nome.split(' ')[0]).join(', '))}) são quase iguais. Erro de digitação?<div class="actions"></div>`;
+    d.innerHTML = `⚠ Os grupos <b>"${esc(p.a.rotulo)}"</b> (${primeiros(p.a)}) e <b>"${esc(p.b.rotulo)}"</b> (${primeiros(p.b)}) são quase iguais. Erro de digitação?<div class="actions"></div>`;
     const acoes = d.querySelector('.actions');
     const btn = (txt, fn) => { const b = document.createElement('button'); b.textContent = txt; b.onclick = fn; acoes.appendChild(b); };
     btn(`Usar "${p.a.rotulo}" para todos`, () => unificar(p.b.chave, p.a.rotulo));
@@ -310,14 +389,16 @@ function atualizarStatus() {
   });
   if (v.sozinhos.length) {
     const d = document.createElement('div'); d.className = 'alerta';
-    d.innerHTML = '⚠ ' + v.sozinhos.map(g => `<b>"${esc(g.rotulo)}"</b> só tem ${esc(g.membros[0].nome.split(' ')[0])}`).join('; ') +
-      '. Grupo serve para impedir que pessoas se tirem, então precisa de 2 ou mais. Confira se não é erro de digitação, ou apague o grupo dessa pessoa.';
+    d.innerHTML = '⚠ ' + v.sozinhos.map(g => `<b>"${esc(g.rotulo)}"</b> só tem ${primeiros(g)}`).join('; ') +
+      '. Grupo serve para impedir que pessoas se tirem, então precisa de 2 ou mais. Confira se não é erro de digitação, ou remova esse grupo (×).';
     box.appendChild(d);
   }
 }
 
 function unificar(chaveDe, rotuloPara) {
-  linhas.forEach(l => { if (AmigoSecreto.normalizarGrupo(l.grupo) === chaveDe) l.grupo = rotuloPara; });
+  linhas.forEach(l => {
+    l.grupo = AmigoSecreto.separarGrupos(gruposDe(l).map(g => AmigoSecreto.normalizarGrupo(g) === chaveDe ? rotuloPara : g).join(',')).join(', ');
+  });
   salvarLinhas(); montarLinhas();
 }
 

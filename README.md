@@ -17,11 +17,11 @@ Sorteio de amigo secreto que roda no navegador, sem servidor e sem custo. Cada p
 2. Preencha nome do amigo secreto, data, local e valor **antes** de sortear. Tudo aparece na mensagem e na página de cada pessoa. Para organizar outro amigo secreto no mesmo navegador, use "Começar do zero".
 3. Preencha a tabela de participantes: **Nome completo**, **Telefone** e **Grupo** (opcional). Também dá para colar as 3 colunas direto do Excel/Google Sheets na primeira célula, ou carregar um CSV.
    - **Telefone:** qualquer formatação (traço, espaço, parênteses, +55). DDD obrigatório. O painel mostra o número interpretado embaixo de cada um e avisa DDD inexistente, falta do 9 ou telefone fixo.
-   - **Grupo:** maiúsculas, acentos e espaços extras são ignorados. O painel mostra "com: …" para conferir, sugere os grupos já digitados e alerta grupos quase iguais (ex.: "Beatriz" x "Beatris"), com botão para unificar, e grupos de uma pessoa só.
+   - **Grupo:** uma pessoa pode estar em **vários grupos** (digite um, aperte Enter, digite o próximo). Maiúsculas, acentos e espaços extras são ignorados. O painel mostra "não tira: …" para conferir, sugere os grupos já digitados e alerta grupos quase iguais (ex.: "Beatriz" x "Beatris"), com botão para unificar, e grupos de uma pessoa só.
 4. Clique em **Sortear**.
 5. Clique em **WhatsApp** (ou SMS) em cada linha e depois em enviar.
 
-O sorteio fica salvo no navegador. Para reenviar a alguém que perdeu a mensagem, abra o painel no mesmo computador e clique de novo. Para trocar de aparelho, use o backup com senha.
+O sorteio fica salvo no navegador. Para reenviar a alguém que perdeu a mensagem, abra o painel no mesmo computador e use **WhatsApp**, **Copiar mensagem** ou **Copiar link** de novo, quantas vezes precisar. O link é sempre o mesmo. Para trocar de aparelho, use o backup com senha.
 
 ## Segurança
 - **Aleatoriedade:** embaralhamento Fisher-Yates com o gerador criptográfico do navegador (`crypto.getRandomValues`), sem viés de módulo. A ordem em que os nomes são digitados não influencia o resultado (verificado estatisticamente nos testes).

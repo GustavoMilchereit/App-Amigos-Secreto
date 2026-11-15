@@ -67,14 +67,26 @@
     return distancia(a, b) <= Math.min(3, Math.max(1, Math.floor(maior / 6)));
   }
 
+  // Uma pessoa pode estar em vários grupos, separados por vírgula: "Casal Gustavo e Beatriz, Família Milchereit".
+  // Repetições (mesmo grupo escrito duas vezes) são removidas.
+  function separarGrupos(texto) {
+    const vistos = new Set(), out = [];
+    String(texto || '').split(',').forEach(g => {
+      const rotulo = g.replace(/\s+/g, ' ').trim(), chave = normalizarGrupo(rotulo);
+      if (chave && !vistos.has(chave)) { vistos.add(chave); out.push(rotulo); }
+    });
+    return out;
+  }
+
   // Divide texto colado do Excel/Sheets ou CSV em linhas { nome, tel, grupo }.
   function linhasDeTexto(texto) {
     const linhas = String(texto || '').split(/\r?\n/).filter(l => l.trim());
     if (linhas.length && /^\s*nome/i.test(linhas[0])) linhas.shift(); // cabeçalho
     return linhas.map(l => {
       const sep = l.includes('\t') ? '\t' : l.includes(';') ? ';' : ',';
-      const [nome = '', tel = '', grupo = ''] = l.split(sep).map(x => x.trim());
-      return { nome, tel, grupo };
+      const [nome = '', tel = '', ...resto] = l.split(sep).map(x => x.trim());
+      // Colunas extras também viram grupos (uma pessoa pode estar em vários).
+      return { nome, tel, grupo: separarGrupos(resto.join(',')).join(', ') };
     });
   }
 
@@ -85,8 +97,8 @@
     const nomes = new Map(), tels = new Map();
     linhas.forEach((l, i) => {
       const nome = String(l.nome || '').replace(/\s+/g, ' ').trim();
-      const rotulo = String(l.grupo || '').replace(/\s+/g, ' ').trim();
-      if (!nome && !String(l.tel || '').trim() && !rotulo) return; // linha vazia
+      const rotulos = separarGrupos(l.grupo);
+      if (!nome && !String(l.tel || '').trim() && !rotulos.length) return; // linha vazia
       if (!nome) erros.push({ linha: i, campo: 'nome', msg: 'Falta o nome.' });
       else {
         const k = nome.toLowerCase();
@@ -100,12 +112,13 @@
         if (tels.has(t.numero)) avisos.push({ linha: i, campo: 'tel', msg: `Mesmo telefone de ${tels.get(t.numero)}: os dois links vão para o mesmo celular.` });
         else tels.set(t.numero, nome || `linha ${i + 1}`);
       }
-      const chave = normalizarGrupo(rotulo);
-      if (chave) {
+      const chaves = rotulos.map(rotulo => {
+        const chave = normalizarGrupo(rotulo);
         if (!gruposPorChave.has(chave)) gruposPorChave.set(chave, { chave, rotulo, membros: [] });
         gruposPorChave.get(chave).membros.push({ linha: i, nome: nome || `linha ${i + 1}` });
-      }
-      pessoas.push({ nome, telefone: t.numero || '', grupo: chave, linha: i });
+        return chave;
+      });
+      pessoas.push({ nome, telefone: t.numero || '', grupos: chaves, linha: i });
     });
 
     const grupos = [...gruposPorChave.values()];
@@ -153,13 +166,21 @@
   // segue em sequência sem "fechar" antes do fim. Embaralha e descarta rodas que violam
   // as regras (amostragem por rejeição), o que mantém todas as rodas válidas igualmente prováveis.
   function sortear(pessoas, rnd = aleatorio) {
-    const mesmoGrupo = (a, b) => a.grupo && a.grupo === b.grupo;
+    // Aceita { grupos: [...] } (vários grupos) ou { grupo: '...' } (formato antigo).
+    const gruposDe = (p) => p.grupos || (p.grupo ? [p.grupo] : []);
+    const mesmoGrupo = (a, b) => { const gb = gruposDe(b); return gruposDe(a).some(g => gb.includes(g)); };
     const tamanhos = {};
-    pessoas.forEach(p => { if (p.grupo) tamanhos[p.grupo] = (tamanhos[p.grupo] || 0) + 1; });
+    pessoas.forEach(p => gruposDe(p).forEach(g => { tamanhos[g] = (tamanhos[g] || 0) + 1; }));
     if (Math.max(0, ...Object.values(tamanhos)) > pessoas.length / 2) {
       throw new Error('Um grupo tem mais da metade dos participantes; impossível sortear sem que alguém tire alguém do próprio grupo.');
     }
-    for (let t = 0; t < 20000; t++) {
+    for (const p of pessoas) {
+      const livres = pessoas.filter(q => q !== p && !mesmoGrupo(p, q)).length;
+      if (livres < 2 && pessoas.length > 2) {
+        throw new Error(`${p.nome} está em grupos com quase todo mundo e não tem pessoas suficientes para tirar ou ser tirado. Revise os grupos.`);
+      }
+    }
+    for (let t = 0; t < 50000; t++) {
       const roda = embaralhar(pessoas, rnd);
       let ok = true;
       for (let i = 0; i < roda.length; i++) {
@@ -246,7 +267,7 @@
   }
 
   const api = {
-    analisarTelefone, normalizarTelefone, normalizarGrupo, quaseIguais, linhasDeTexto, validar, parse, embaralhar, sortear,
+    VERSAO: '9', analisarTelefone, normalizarTelefone, normalizarGrupo, separarGrupos, quaseIguais, linhasDeTexto, validar, parse, embaralhar, sortear,
     selar, abrir, cifrarComSenha, decifrarComSenha, mensagem,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
