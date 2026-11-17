@@ -39,39 +39,39 @@ Vera; 5551966660000`;
   // ---------- Grupos ----------
   const g = (txt) => A.validar(A.linhasDeTexto(txt));
   // Maiúsculas, acentos e espaços extras não criam grupo novo.
-  let v = g('Gustavo; 11987650001; Família Silva\nBeatriz; 11987650002;  familia   SILVA \nAna; 11987650003');
+  let v = g('Otávio; 11987650001; Família Silva\nHelena; 11987650002;  familia   SILVA \nAna; 11987650003');
   assert.strictEqual(v.grupos.length, 1); assert.strictEqual(v.grupos[0].membros.length, 2);
   assert.deepStrictEqual(v.suspeitos, []); assert.deepStrictEqual(v.sozinhos, []);
   // Erro de digitação: vira alerta de grupos quase iguais.
-  v = g('Gustavo; 11987650001; Casal Gustavo e Beatriz\nBeatriz; 11987650002; Casal Gustavo e Beatris\nAna; 11987650003');
+  v = g('Otávio; 11987650001; Casal Otávio e Helena\nHelena; 11987650002; Casal Otávio e Helna\nAna; 11987650003');
   assert.strictEqual(v.suspeitos.length, 1);
   // Organizador confirma que são diferentes: alerta some, sobram os grupos de uma pessoa só.
-  v = A.validar(A.linhasDeTexto('Gustavo; 11987650001; Casal Gustavo e Beatriz\nBeatriz; 11987650002; Casal Gustavo e Beatris\nAna; 11987650003'), [v.suspeitos[0].par]);
+  v = A.validar(A.linhasDeTexto('Otávio; 11987650001; Casal Otávio e Helena\nHelena; 11987650002; Casal Otávio e Helna\nAna; 11987650003'), [v.suspeitos[0].par]);
   assert.strictEqual(v.suspeitos.length, 0); assert.strictEqual(v.sozinhos.length, 2);
   // "Casal 1" x "Casal 2" são grupos legítimos.
   v = g('A; 11987650001; Casal 1\nB; 11987650002; Casal 1\nC; 11987650003; Casal 2\nD; 11987650004; Casal 2');
   assert.deepStrictEqual(v.suspeitos, []);
   // Vários grupos por pessoa.
   assert.deepStrictEqual(A.separarGrupos('Casal G e B, família M ,  Família  M, '), ['Casal G e B', 'família M']);
-  v = g(`Gustavo; 11987650001; Casal Gustavo e Beatriz, Família Milchereit
-Beatriz; 11987650002; Casal Gustavo e Beatriz
-Maria; 11987650003; Família Milchereit
-Pedro; 11987650004; Família Milchereit
+  v = g(`Otávio; 11987650001; Casal Otávio e Helena, Família Souza
+Helena; 11987650002; Casal Otávio e Helena
+Maria; 11987650003; Família Souza
+Pedro; 11987650004; Família Souza
 Ana; 11987650005
 Bia; 11987650006
 Caio; 11987650007
 Davi; 11987650008`);
   assert.deepStrictEqual(v.erros, []); assert.deepStrictEqual(v.sozinhos, []); assert.deepStrictEqual(v.suspeitos, []);
-  assert.deepStrictEqual(v.pessoas[0].grupos, ['casal gustavo e beatriz', 'familia milchereit']);
+  assert.deepStrictEqual(v.pessoas[0].grupos, ['casal otavio e helena', 'familia souza']);
   for (let k = 0; k < 2000; k++) {
     const r = A.sortear(v.pessoas), m = new Map(r.map(x => [x.de.nome, x.para.nome]));
-    for (const [x, y] of [['Gustavo', 'Beatriz'], ['Gustavo', 'Maria'], ['Gustavo', 'Pedro'], ['Maria', 'Pedro']]) {
+    for (const [x, y] of [['Otávio', 'Helena'], ['Otávio', 'Maria'], ['Otávio', 'Pedro'], ['Maria', 'Pedro']]) {
       assert.notStrictEqual(m.get(x), y, `${x} não pode tirar ${y}`); assert.notStrictEqual(m.get(y), x, `${y} não pode tirar ${x}`);
     }
-    // Beatriz e Maria NÃO estão no mesmo grupo: podem se tirar.
+    // Helena e Maria NÃO estão no mesmo grupo: podem se tirar.
   }
   // Colunas extras no Excel viram grupos adicionais.
-  assert.strictEqual(A.linhasDeTexto('Gustavo\t11987650001\tCasal\tFamília')[0].grupo, 'Casal, Família');
+  assert.strictEqual(A.linhasDeTexto('Otávio\t11987650001\tCasal\tFamília')[0].grupo, 'Casal, Família');
   // Pessoa em grupo com todo mundo: erro claro em vez de travar.
   assert.throws(() => A.sortear(A.validar(A.linhasDeTexto('A;11987650001;g1,g2\nB;11987650002;g1\nC;11987650003;g2\nD;11987650004;g1')).pessoas));
 

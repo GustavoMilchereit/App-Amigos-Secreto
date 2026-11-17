@@ -58,7 +58,7 @@
     return ant[n];
   }
 
-  // Dois grupos "quase iguais" provavelmente são erro de digitação ("Beatriz" x "Beatris").
+  // Dois grupos "quase iguais" provavelmente são erro de digitação ("Helena" x "Helna").
   // Não acusa grupos que só diferem no número ("Casal 1" x "Casal 2") nem nomes muito curtos.
   function quaseIguais(a, b) {
     if (a.replace(/\d+/g, '#') === b.replace(/\d+/g, '#')) return false;
@@ -67,7 +67,7 @@
     return distancia(a, b) <= Math.min(3, Math.max(1, Math.floor(maior / 6)));
   }
 
-  // Uma pessoa pode estar em vários grupos, separados por vírgula: "Casal Gustavo e Beatriz, Família Milchereit".
+  // Uma pessoa pode estar em vários grupos, separados por vírgula: "Casal Otávio e Helena, Família Souza".
   // Repetições (mesmo grupo escrito duas vezes) são removidas.
   function separarGrupos(texto) {
     const vistos = new Set(), out = [];
