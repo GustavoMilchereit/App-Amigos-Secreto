@@ -142,19 +142,24 @@
   .v-of { text-transform: uppercase; letter-spacing: .26em; font-size: .78rem; font-weight: 700; color: var(--gold-2); line-height: 1.8; opacity: 0; }
   .on .v-of { animation: aparecer .5s ease .15s forwards; }
   .placa {
-    position: relative; overflow: hidden; width: min(62vw, 230px); padding: 16px 20px; border-radius: 22px; background: #fff;
+    position: relative; overflow: hidden; width: min(66vw, 250px); padding: 16px 20px; border-radius: 22px; background: #fff;
     box-shadow: 0 0 0 4px rgba(255, 224, 138, .55), 0 0 70px rgba(255, 224, 138, .35), 0 30px 70px rgba(0, 0, 0, .55);
     opacity: 0; transform: scale(.35) rotate(-8deg);
   }
   .on .placa { animation: placa .75s cubic-bezier(.2, 1.5, .4, 1) .4s forwards; }
-  .placa img { display: block; width: 100%; height: auto; }
+  .placa img { display: block; height: auto; margin: 0 auto; }
+  .placa .p-eng { width: 68%; }
+  .placa .p-sep { height: 1px; margin: 10px 8px; background: #e6e2dc; opacity: 0; }
+  .placa .p-for { width: 100%; opacity: 0; transform: translateY(14px); }
+  .on .placa .p-sep { animation: aparecer .4s ease 1.05s forwards; }
+  .on .placa .p-for { animation: entrar .55s cubic-bezier(.2, 1.3, .4, 1) 1.1s forwards; }
   .placa::after {
     content: ""; position: absolute; inset: 0; transform: translateX(-130%);
     background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .95) 50%, transparent 70%);
   }
-  .on .placa::after { animation: reflexo 1.1s ease 1.2s forwards; }
+  .on .placa::after { animation: reflexo 1.1s ease 1.7s forwards; }
   .v-pular { font-size: .78rem; color: var(--muted); opacity: 0; }
-  .on .v-pular { animation: aparecer .6s ease 1.6s forwards; }
+  .on .v-pular { animation: aparecer .6s ease 2s forwards; }
   .v-susp { opacity: 0; transform: scale(.92); pointer-events: none; }
   .v-susp p { font-family: Fraunces, Georgia, serif; font-style: italic; font-weight: 600; font-size: clamp(1.7rem, 8vw, 2.4rem); line-height: 1.15; margin: 0; }
   .pontos { display: flex; gap: 10px; }
@@ -163,7 +168,8 @@
   #vinheta.suspense .v-patro { opacity: 0; transform: scale(.85); }
   #vinheta.suspense .v-susp { opacity: 1; transform: none; }
 
-  .apoio { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
+  .apoio { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
+  .apoio .logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
   .apoio span { text-transform: uppercase; letter-spacing: .2em; font-size: .64rem; font-weight: 700; color: var(--muted); }
   .apoio img { height: 46px; width: auto; padding: 5px 8px; border-radius: 10px; background: #fff; }
 
@@ -188,6 +194,7 @@
   @keyframes brilhar { from { background-position: 100% 0; } to { background-position: -200% 0; } }
   @keyframes aparecer { to { opacity: 1; } }
   @keyframes placa { to { opacity: 1; transform: none; } }
+  @keyframes entrar { to { opacity: 1; transform: none; } }
   @keyframes reflexo { to { transform: translateX(130%); } }
   @keyframes tambor { 50% { transform: translateY(-8px) scale(1.15); opacity: .55; } }
 
@@ -226,7 +233,7 @@
         <div class="nome" id="nome"></div>
         <div class="grupo" id="grupo"></div>
         <div class="infos" id="infos"></div>
-        <div class="apoio"><span>Oferecimento</span><img src="engecid.png" alt="Engecid Engenharia"></div>
+        <div class="apoio"><span>Oferecimento</span><div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="forushop.png" alt="forUshop"></div></div>
       </div>
       <div class="botoes"><button id="esconder">🙈 Esconder nome</button></div>
       <p class="segredo">🤫 Shhh! Guarde segredo até o dia da revelação.</p>
@@ -236,7 +243,7 @@
   <div id="vinheta" aria-live="polite" role="status">
     <div class="v-patro">
       <div class="v-of">Este amigo secreto<br>tem o oferecimento de</div>
-      <div class="placa"><img src="engecid.png" alt="Engecid Engenharia"></div>
+      <div class="placa"><img class="p-eng" src="engecid.png" alt="Engecid Engenharia"><div class="p-sep"></div><img class="p-for" src="forushop.png" alt="forUshop"></div>
       <div class="v-pular">toque para pular</div>
     </div>
     <div class="v-susp">
@@ -371,11 +378,11 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;
       app.classList.remove('abrindo'); app.classList.add('aberto');
       depois(450, () => app.classList.add('final'));
       depois(calmo ? 0 : 500, () => vin.classList.add('on'));
-      depois(calmo ? 1800 : 3200, () => {
+      depois(calmo ? 2200 : 3800, () => {
         vin.classList.add('suspense');
         if (navigator.vibrate) navigator.vibrate([40, 80, 40, 80, 40, 80, 40, 80]);
       });
-      depois(calmo ? 2400 : 4900, revelar);
+      depois(calmo ? 2800 : 5500, revelar);
     });
   };
 

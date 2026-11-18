@@ -50,8 +50,17 @@
   .apoio-topo { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px 10px;
     background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .06); }
   .apoio-topo span { font-size: .62rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #6b665e; }
-  .apoio-topo img { display: block; height: 72px; width: auto; }
-  @media (max-width: 560px) { .apoio-topo { padding: 6px 8px 8px; } .apoio-topo img { height: 50px; } .topo h1 { font-size: 1.45rem; } }
+  .apoio-topo .logos { display: flex; align-items: center; gap: 12px; }
+  .apoio-topo img { display: block; width: auto; }
+  .apoio-topo .l-eng { height: 68px; }
+  .apoio-topo .l-for { height: 44px; padding-left: 12px; border-left: 1px solid #e3ddd3; }
+  @media (max-width: 560px) {
+    .apoio-topo { padding: 6px 8px 8px; }
+    .apoio-topo .logos { flex-direction: column; gap: 4px; }
+    .apoio-topo .l-eng { height: 46px; }
+    .apoio-topo .l-for { height: auto; width: 96px; padding: 4px 0 0; border-left: 0; border-top: 1px solid #e3ddd3; }
+    .topo h1 { font-size: 1.45rem; }
+  }
   .contador { font-weight: 500; color: var(--muted); font-size: .9rem; }
   .ajuda { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   .ajuda > div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: .86rem; }
@@ -94,7 +103,7 @@
       <h1>🎁 Amigo Secreto</h1>
       <p class="sub">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
     </div>
-    <div class="apoio-topo"><span>Apoio</span><img src="engecid.png" alt="Engecid Engenharia"></div>
+    <div class="apoio-topo"><span>Apoio</span><div class="logos"><img class="l-eng" src="engecid.png" alt="Engecid Engenharia"><img class="l-for" src="forushop.png" alt="forUshop"></div></div>
   </header>
 
   <section id="sec-evento">
