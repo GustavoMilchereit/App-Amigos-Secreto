@@ -5,7 +5,7 @@ Sorteio de amigo secreto que roda no navegador, sem servidor e sem custo. Cada p
 - **Painel do organizador:** https://gustavomilchereit.github.io/App-Amigos-Secreto/painel.html
 - **Links dos participantes:** `https://gustavomilchereit.github.io/App-Amigos-Secreto/#...` (cerca de 200 caracteres)
 
-Patrocínio Ouro: **forUshop**. Prata: **Engecid Engenharia** e **Fortel**. Com selo no painel e vinheta de "oferecimento" na revelação.
+Apoio: **forUshop**, **Engecid Engenharia** e **Fortel**, com selo no painel e vinheta de "oferecimento" na revelação.
 
 ## Regras garantidas
 - Ninguém tira a si mesmo.

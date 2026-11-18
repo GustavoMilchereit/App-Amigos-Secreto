@@ -53,17 +53,16 @@
   .apoio-topo .faixa + .faixa { padding-top: 8px; border-top: 1px solid #ece7df; }
   .apoio-topo .logos { display: flex; align-items: center; gap: 10px; }
   .apoio-topo img { display: block; width: auto; }
-  .apoio-topo .ouro img { height: 46px; }
-  .apoio-topo .prata img { height: 44px; }
-  .selo-nivel { font-size: .58rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; color: #3b2a00; }
-  .selo-nivel.ouro { background: linear-gradient(135deg, #f7d774, #d4a017 55%, #f3cf5b); }
-  .selo-nivel.prata { background: linear-gradient(135deg, #f2f2f2, #b9bec4 55%, #e6e8ea); color: #2c3136; }
+  .apoio-topo .rotulo { font-size: .62rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #6b665e; }
+  .apoio-topo .ouro img { height: 52px; }
+  .apoio-topo .prata img { height: 40px; }
   @media (max-width: 560px) {
     .topo { flex-direction: column; gap: 12px; }
-    .apoio-topo { flex-direction: row; justify-content: center; align-self: stretch; gap: 14px; padding: 8px 10px; }
+    .apoio-topo { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; align-self: stretch; gap: 6px 14px; padding: 8px 10px; }
+    .apoio-topo .rotulo { flex-basis: 100%; text-align: center; }
     .apoio-topo .faixa + .faixa { padding: 0 0 0 14px; border-top: 0; border-left: 1px solid #ece7df; }
-    .apoio-topo .ouro img { height: 38px; }
-    .apoio-topo .prata img { height: 38px; }
+    .apoio-topo .ouro img { height: 44px; }
+    .apoio-topo .prata img { height: 34px; }
     .topo h1 { font-size: 1.45rem; }
   }
   .contador { font-weight: 500; color: var(--muted); font-size: .9rem; }
@@ -109,8 +108,9 @@
       <p class="sub">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
     </div>
     <div class="apoio-topo" aria-label="Patrocinadores">
-      <div class="faixa ouro"><span class="selo-nivel ouro">Patrocínio Ouro</span><div class="logos"><img src="forushop.png" alt="forUshop"></div></div>
-      <div class="faixa prata"><span class="selo-nivel prata">Prata</span><div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div></div>
+      <span class="rotulo">Apoio</span>
+      <div class="faixa ouro"><div class="logos"><img src="forushop.png" alt="forUshop"></div></div>
+      <div class="faixa prata"><div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div></div>
     </div>
   </header>
 
