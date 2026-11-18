@@ -1,0 +1,99 @@
+<!doctype html>
+<!--
+  Página de revelação — o que cada participante vê ao abrir o link recebido.
+
+  O link tem a forma  https://…/#<código>. O código (depois do "#") traz o
+  resultado cifrado; a página o decifra no próprio celular, sem servidor.
+  Sem código, mostra uma tela de boas-vindas com acesso ao painel.
+
+  Estilo: css/revelacao.css · Lógica da tela: js/revelacao.js
+  Decifragem: js/sorteio.js · Logos: js/patrocinadores.js
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>🎁 Seu amigo secreto chegou!</title>
+<!-- Prévia do link no WhatsApp (o código depois do "#" nunca é enviado ao servidor) -->
+<meta name="description" content="Abra para descobrir quem você tirou. Shhh 🤫">
+<meta property="og:title" content="🎁 Seu amigo secreto chegou!">
+<meta property="og:description" content="Abra para descobrir quem você tirou. Shhh 🤫">
+<meta name="theme-color" content="#2a0a14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/revelacao.css?v=10">
+</head>
+<body>
+<canvas id="neve"></canvas>
+<canvas id="confete"></canvas>
+
+<main id="app">
+  <!-- Enquanto decifra o link -->
+  <div id="carregando" class="tela-aviso"><div class="icone-grande">🎁</div><p class="subtitulo">Verificando seu link…</p></div>
+
+  <!-- Cena principal: boas-vindas, presente e (depois de aberto) o resultado -->
+  <div id="cena" class="oculto">
+    <div class="boas-vindas">
+      <div class="nome-do-evento" id="evento"></div>
+      <h1>Olá, <em id="ola"></em>!</h1>
+      <p class="subtitulo">Seu presente chegou. Antes de abrir, confira se ninguém está espiando. 👀</p>
+    </div>
+
+    <div class="palco">
+      <div class="raios"></div>
+      <div class="brilho"></div>
+      <button class="presente" id="presente" aria-label="Abrir o presente">
+        <div class="caixa"></div>
+        <div class="tampa"><div class="laco"><i></i><i></i><b></b></div></div>
+      </button>
+    </div>
+    <div class="dica-tocar">Toque no presente para abrir</div>
+
+    <section class="resultado" aria-live="polite">
+      <div class="cartao">
+        <div class="voce-tirou">Você tirou</div>
+        <div class="nome" id="nome"></div>
+        <div class="grupo-do-evento" id="grupo"></div>
+        <div class="informacoes" id="infos"></div>
+        <div class="cartao-patrocinio" id="cartao-patrocinio"></div>
+      </div>
+      <div class="botoes"><button id="esconder">🙈 Esconder nome</button></div>
+      <p class="segredo">🤫 Shhh! Guarde segredo até o dia da revelação.</p>
+    </section>
+  </div>
+
+  <!-- Vinheta estilo TV: oferecimento dos patrocinadores e suspense. Tocar pula. -->
+  <div id="vinheta" aria-live="polite" role="status">
+    <div class="vinheta-patrocinio">
+      <div class="vinheta-chamada">Este amigo secreto<br>tem o oferecimento de</div>
+      <div class="placa" id="placa"></div>
+      <div class="vinheta-pular">toque para pular</div>
+    </div>
+    <div class="vinheta-suspense">
+      <p>E quem você<br>tirou foi…</p>
+      <div class="pontos"><i></i><i></i><i></i></div>
+    </div>
+  </div>
+
+  <!-- Link cortado, alterado ou inventado -->
+  <div id="erro" class="tela-aviso oculto">
+    <div class="icone-grande">🕵️</div>
+    <h1>Esse link não abriu</h1>
+    <p class="subtitulo">Ele pode ter sido cortado ao copiar ou alterado por algum engraçadinho. Abra exatamente como recebeu, ou peça ao organizador para reenviar.</p>
+  </div>
+
+  <!-- Página aberta sem código (endereço principal do site) -->
+  <div id="vazio" class="tela-aviso oculto">
+    <div class="icone-grande">🎄</div>
+    <h1>Amigo Secreto</h1>
+    <p class="subtitulo">Para descobrir quem você tirou, abra o link pessoal que você recebeu no WhatsApp ou por SMS.</p>
+    <p class="subtitulo link-organizador"><a href="painel.html">Sou o organizador</a></p>
+  </div>
+</main>
+
+<script src="js/sorteio.js?v=10"></script>
+<script src="js/patrocinadores.js?v=10"></script>
+<script src="js/revelacao.js?v=10"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "amigo-secreto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sorteio de amigo secreto sem servidor, com links pessoais criptografados enviados por WhatsApp ou SMS.",
+  "scripts": {
+    "test": "node tests/sorteio.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

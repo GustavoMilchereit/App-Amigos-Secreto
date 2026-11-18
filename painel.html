@@ -1,0 +1,112 @@
+<!doctype html>
+<!--
+  Painel do organizador.
+  Aqui o organizador cadastra o evento e os participantes, faz o sorteio e
+  envia a cada pessoa o link pessoal (WhatsApp, SMS ou copiar).
+
+  Estilo: css/painel.css · Lógica da tela: js/painel.js
+  Regras do sorteio e criptografia: js/sorteio.js · Logos: js/patrocinadores.js
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amigo Secreto: Painel</title>
+<link rel="stylesheet" href="css/painel.css?v=10">
+</head>
+<body>
+<main>
+
+  <!-- Cabeçalho: título e selo de patrocinadores (preenchido por js/painel.js) -->
+  <header class="cabecalho">
+    <div>
+      <h1>🎁 Amigo Secreto</h1>
+      <p class="subtitulo">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
+    </div>
+    <div id="patrocinio" class="patrocinio oculto" aria-label="Patrocinadores"></div>
+  </header>
+
+  <!-- Passo 1: dados do evento. Tudo aqui vai na mensagem e na página de cada pessoa. -->
+  <section id="sec-evento">
+    <h2>1. Evento</h2>
+    <div class="duas-colunas">
+      <div><label for="ev-nome">Nome do amigo secreto</label><input id="ev-nome" placeholder="Ex.: Amigo Secreto da Família"></div>
+      <div><label for="ev-data">📅 Data e horário</label><input id="ev-data" placeholder="Ex.: 24/12 às 20h"></div>
+    </div>
+    <div class="duas-colunas">
+      <div><label for="ev-local">📍 Local</label><input id="ev-local" placeholder="Ex.: Casa da vó"></div>
+      <div><label for="ev-valor">💰 Valor sugerido</label><input id="ev-valor" placeholder="Ex.: R$ 100"></div>
+    </div>
+    <label for="ev-url">Endereço da página de revelação</label>
+    <input id="ev-url" placeholder="Deixe vazio se abriu este painel pelo site">
+    <p class="dica">O endereço precisa estar publicado na internet (ex.: GitHub Pages ou Netlify), senão os links não abrem no celular dos participantes. Preencha tudo <b>antes</b> de sortear: nome, data, local e valor aparecem na mensagem e na página de cada pessoa.</p>
+  </section>
+
+  <!-- Passo 2: participantes. As linhas da tabela são criadas por js/painel.js. -->
+  <section id="sec-pessoas">
+    <h2>2. Participantes <span class="contador" id="contador"></span></h2>
+
+    <div class="ajuda">
+      <div>
+        <b>📞 Telefone</b>
+        <p>Digite como preferir: <b>com ou sem</b> traço, espaço, parênteses no DDD ou +55. O <b>DDD é obrigatório</b>, porque sem ele o WhatsApp não acha o número.</p>
+        <p class="exemplo">✅ (11) 98765-4321 · 11 98765-4321 · 11987654321 · +55 11 98765-4321<br>❌ 98765-4321 (sem DDD)</p>
+        <p>Número do exterior: comece com + e o código do país (ex.: +1 415 555 0100).</p>
+      </div>
+      <div>
+        <b>👥 Grupo (opcional)</b>
+        <p>Pessoas do mesmo grupo <b>não tiram umas às outras</b> (casais, pais e filhos pequenos). O grupo precisa estar escrito <b>igual</b> para todos. Um erro de digitação separa o casal:</p>
+        <p class="exemplo">"Casal Otávio e Helena" ≠ "Casal Otávio e Helna" → viram 2 grupos, e o casal pode se tirar.</p>
+        <p>Para evitar: <b>escolha o grupo na lista</b> que aparece ao digitar e confira o "não tira: …" embaixo. Maiúsculas, acentos e espaços extras são ignorados. Grupos parecidos e grupos de uma pessoa só geram alerta.</p>
+        <p><b>Mais de um grupo:</b> digite o grupo e aperte <b>Enter</b> (ou vírgula), depois digite o próximo. Ex.: Otávio em "Casal Otávio e Helena" e em "Pais e filhos Souza".</p>
+      </div>
+    </div>
+
+    <div class="grade-participantes tabela-cabecalho" aria-hidden="true">
+      <span>#</span><span>Nome completo</span><span>Telefone</span><span>Grupo</span><span></span>
+    </div>
+    <div id="linhas"></div>
+    <datalist id="lista-grupos"></datalist>
+
+    <div class="acoes">
+      <button id="btn-add">＋ Adicionar pessoa</button>
+      <label class="botao">📄 Carregar CSV<input type="file" id="csv" accept=".csv,.txt" class="oculto"></label>
+      <button id="btn-limpar">🗑 Limpar tabela</button>
+    </div>
+    <p class="dica">Dica: dá para copiar as 3 colunas do Excel ou do Google Sheets e colar na primeira célula de nome.</p>
+
+    <div id="alertas"></div>
+    <div class="acoes"><button class="botao-principal" id="btn-sortear">🎲 Sortear</button></div>
+    <div id="mensagem"></div>
+  </section>
+
+  <!-- Passo 3: envio. Aparece depois do sorteio; as linhas são criadas por js/painel.js. -->
+  <section id="sec-links" class="oculto">
+    <h2>3. Enviar os links</h2>
+    <p class="dica no-topo">A mensagem leva só o link pessoal cifrado. Este painel não guarda quem tirou quem. Não abra os links dos outros.</p>
+    <div class="rolagem-horizontal">
+      <table>
+        <thead><tr><th>Participante</th><th>Telefone</th><th>Enviar</th></tr></thead>
+        <tbody id="tabela-envio"></tbody>
+      </table>
+    </div>
+    <div class="acoes">
+      <button id="btn-backup">🔒 Baixar backup com senha</button>
+      <button id="btn-refazer">↺ Refazer sorteio</button>
+    </div>
+    <p class="dica">Os links ficam salvos neste navegador para reenvio. Para reenviar de outro aparelho, use o backup.</p>
+  </section>
+
+  <!-- Rodapé: restaurar backup e começar outro amigo secreto. -->
+  <p class="dica rodape">
+    <label class="botao">📂 Restaurar backup<input type="file" id="arq-backup" class="oculto"></label>
+    <button id="btn-zero">🆕 Começar do zero</button>
+  </p>
+  <p class="dica rodape">Use "Começar do zero" para organizar outro amigo secreto neste mesmo navegador. Antes, termine de enviar os links do atual.</p>
+</main>
+
+<script src="js/sorteio.js?v=10"></script>
+<script src="js/patrocinadores.js?v=10"></script>
+<script src="js/painel.js?v=10"></script>
+</body>
+</html>
