@@ -1,9 +1,20 @@
 <!doctype html>
+<!--
+  Página de revelação — o que cada participante vê ao abrir o link recebido.
+
+  O link tem a forma  https://…/#<código>. O código (depois do "#") traz o
+  resultado cifrado; a página o decifra no próprio celular, sem servidor.
+  Sem código, mostra uma tela de boas-vindas com acesso ao painel.
+
+  Estilo: css/revelacao.css · Lógica da tela: js/revelacao.js
+  Decifragem: js/sorteio.js · Logos: js/patrocinadores.js
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>🎁 Seu amigo secreto chegou!</title>
+<!-- Prévia do link no WhatsApp (o código depois do "#" nunca é enviado ao servidor) -->
 <meta name="description" content="Abra para descobrir quem você tirou. Shhh 🤫">
 <meta property="og:title" content="🎁 Seu amigo secreto chegou!">
 <meta property="og:description" content="Abra para descobrir quem você tirou. Shhh 🤫">
@@ -11,216 +22,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --gold-1: #b8860b; --gold-2: #ffe08a; --gold-3: #f5c542;
-    --red-1: #e2453f; --red-2: #a3161f; --ink: #fff8ec; --muted: rgba(255, 248, 236, .72);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
-  body {
-    margin: 0; color: var(--ink); overflow-x: hidden;
-    font: 17px/1.5 "DM Sans", system-ui, -apple-system, sans-serif;
-    background:
-      radial-gradient(ellipse at 50% 115%, rgba(245, 197, 66, .22), transparent 55%),
-      radial-gradient(ellipse at 15% 10%, rgba(226, 69, 63, .35), transparent 50%),
-      radial-gradient(ellipse at 90% 30%, rgba(30, 107, 58, .35), transparent 50%),
-      linear-gradient(160deg, #2a0a14 0%, #14081f 55%, #071a1a 100%);
-    background-attachment: fixed;
-  }
-  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  #neve { z-index: 0; }
-  #confete { z-index: 5; }
-
-  html, body { overflow-x: hidden; }
-  main {
-    overflow: hidden; overflow: clip; /* tampa voando e raios não podem alargar a página */
-    position: relative; z-index: 2; min-height: 100%; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center;
-    padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
-  }
-  .evento { text-transform: uppercase; letter-spacing: .22em; font-size: .72rem; font-weight: 700; color: var(--gold-2); opacity: .9; }
-  h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1.1; margin: 10px 0 8px; }
-  h1 em { font-style: italic; color: var(--gold-2); }
-  .sub { color: var(--muted); max-width: 320px; margin: 0 auto; }
-
-  /* ---------- Presente ---------- */
-  .palco { position: relative; width: 240px; height: 250px; margin: 34px auto 10px; }
-  .raios {
-    position: absolute; left: 50%; top: 58%; width: 520px; height: 520px; margin: -260px 0 0 -260px;
-    background: repeating-conic-gradient(from 0deg, rgba(255, 224, 138, .28) 0 8deg, transparent 8deg 22deg);
-    border-radius: 50%; -webkit-mask: radial-gradient(circle, #000 18%, transparent 68%); mask: radial-gradient(circle, #000 18%, transparent 68%);
-    opacity: 0; transform: scale(.2); pointer-events: none;
-  }
-  .brilho { position: absolute; left: 50%; top: 62%; width: 200px; height: 200px; margin: -100px 0 0 -100px;
-    border-radius: 50%; background: radial-gradient(circle, rgba(255, 224, 138, .55), transparent 65%); filter: blur(6px);
-    animation: pulsar 2.6s ease-in-out infinite; }
-  .presente { position: absolute; inset: 0; cursor: pointer; border: 0; background: none; padding: 0; animation: flutuar 3.2s ease-in-out infinite; }
-  .presente:focus-visible { outline: 3px solid var(--gold-2); outline-offset: 8px; border-radius: 16px; }
-  .caixa {
-    position: absolute; left: 30px; right: 30px; bottom: 10px; height: 140px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--red-1), var(--red-2));
-    box-shadow: inset -14px -10px 0 rgba(0, 0, 0, .14), 0 24px 40px rgba(0, 0, 0, .45);
-  }
-  .caixa::before, .tampa::before {
-    content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 32px; margin-left: -16px;
-    background: linear-gradient(90deg, var(--gold-1), var(--gold-2) 45%, var(--gold-3) 60%, var(--gold-1));
-  }
-  .tampa {
-    position: absolute; left: 18px; right: 18px; bottom: 140px; height: 46px; border-radius: 10px;
-    background: linear-gradient(135deg, #ee5650, #b8232b);
-    box-shadow: 0 8px 14px rgba(0, 0, 0, .25), inset -14px -6px 0 rgba(0, 0, 0, .12);
-    transform-origin: 30% 100%;
-  }
-  .laco { position: absolute; left: 50%; bottom: 100%; width: 0; height: 0; }
-  .laco i {
-    position: absolute; bottom: -6px; width: 62px; height: 42px; border: 12px solid var(--gold-3);
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .08);
-  }
-  .laco i:nth-child(1) { right: -2px; transform: rotate(-22deg); transform-origin: right bottom; }
-  .laco i:nth-child(2) { left: -2px; transform: rotate(22deg); transform-origin: left bottom; }
-  .laco b { position: absolute; left: -15px; bottom: -14px; width: 30px; height: 26px; border-radius: 10px;
-    background: radial-gradient(circle at 40% 35%, var(--gold-2), var(--gold-1)); }
-  .dica { margin-top: 6px; font-weight: 700; letter-spacing: .04em; color: var(--gold-2); animation: piscar 1.8s ease-in-out infinite; }
-
-  /* Abrindo */
-  .abrindo .presente { animation: tremer .9s cubic-bezier(.36, .07, .19, .97) both; }
-  .aberto .presente { animation: none; cursor: default; }
-  .aberto .tampa { animation: voar 1s cubic-bezier(.2, .7, .3, 1) forwards; }
-  .aberto .raios { animation: raios 1.2s ease-out forwards, girar 18s linear 1.2s infinite; }
-  .aberto .caixa { animation: afundar .8s ease-in .5s forwards; }
-  .aberto .dica, .aberto .boasvindas { opacity: 0; transform: translateY(-10px); transition: .4s; pointer-events: none; }
-
-  .final .boasvindas, .final .dica { display: none; }
-  .final .palco { margin-top: 0; }
-
-  /* ---------- Resultado ---------- */
-  .resultado { display: none; width: 100%; max-width: 420px; margin-top: -150px; }
-  .revelado .resultado { display: block; }
-  .cartao {
-    position: relative; padding: 28px 22px 22px; border-radius: 22px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .05));
-    border: 1px solid rgba(255, 224, 138, .35); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, .45);
-    opacity: 0; transform: translateY(40px) scale(.96); animation: subir .8s cubic-bezier(.2, .8, .2, 1) .1s forwards;
-  }
-  .tirou { text-transform: uppercase; letter-spacing: .25em; font-size: .78rem; font-weight: 700; color: var(--muted); }
-  .nome {
-    font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: clamp(2.4rem, 12vw, 3.6rem); line-height: 1.05;
-    margin: 12px 0 4px; word-break: break-word; transition: filter .3s;
-  }
-  .nome .palavra > span {
-    display: inline-block; opacity: 0; transform: translateY(24px) rotate(-8deg);
-    background: linear-gradient(100deg, var(--gold-1), var(--gold-2) 40%, #fff 50%, var(--gold-2) 60%, var(--gold-3));
-    background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: letra .5s cubic-bezier(.2, .9, .3, 1.4) forwards, brilhar 4s linear infinite;
-  }
-  .grupo { margin-top: 10px; padding-top: 12px; border-top: 1px dashed rgba(255, 224, 138, .35);
-    text-transform: uppercase; letter-spacing: .2em; font-size: .72rem; font-weight: 700; color: var(--gold-2); }
-  .infos { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
-  .infos:empty { display: none; }
-  .infos span { padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, .1);
-    border: 1px solid rgba(255, 255, 255, .16); font-size: .9rem; }
-  .nome .palavra { display: inline-block; white-space: nowrap; }
-  .nome.longo { font-size: clamp(1.8rem, 9vw, 2.8rem); }
-  .nome.escondido { filter: blur(16px); }
-  .botoes { display: flex; gap: 10px; justify-content: center; margin-top: 18px; opacity: 0; animation: aparecer .6s ease 1.5s forwards; }
-  .botoes button {
-    padding: 11px 18px; border-radius: 999px; border: 1px solid rgba(255, 224, 138, .45); cursor: pointer;
-    background: rgba(255, 255, 255, .06); color: var(--ink); font: inherit; font-weight: 700;
-  }
-  .segredo { margin-top: 16px; color: var(--muted); font-size: .92rem; opacity: 0; animation: aparecer .6s ease 1.7s forwards; }
-
-  /* ---------- Vinheta do patrocinador ---------- */
-  #vinheta {
-    position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; padding: 24px; text-align: center;
-    background: radial-gradient(circle at 50% 45%, rgba(20, 10, 30, .35), rgba(8, 4, 16, .88) 70%);
-    opacity: 0; visibility: hidden; transition: opacity .45s, visibility .45s; cursor: pointer;
-  }
-  #vinheta.on { opacity: 1; visibility: visible; }
-  #vinheta > div { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; gap: 18px; transition: opacity .4s, transform .4s; }
-  .v-of { text-transform: uppercase; letter-spacing: .26em; font-size: .78rem; font-weight: 700; color: var(--gold-2); line-height: 1.8; opacity: 0; }
-  .on .v-of { animation: aparecer .5s ease .15s forwards; }
-  .placa {
-    position: relative; overflow: hidden; width: min(66vw, 250px); padding: 16px 20px; border-radius: 22px; background: #fff;
-    box-shadow: 0 0 0 4px rgba(255, 224, 138, .55), 0 0 70px rgba(255, 224, 138, .35), 0 30px 70px rgba(0, 0, 0, .55);
-    opacity: 0; transform: scale(.35) rotate(-8deg);
-  }
-  .on .placa { animation: placa .75s cubic-bezier(.2, 1.5, .4, 1) .4s forwards; }
-  .placa img { display: block; height: auto; margin: 0 auto; }
-  .placa .p-ouro, .placa .p-prata { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .placa .p-ouro img { width: 100%; }
-  .placa .p-sep { height: 1px; margin: 12px 8px; background: #e6e2dc; opacity: 0; }
-  .placa .p-prata { opacity: 0; transform: translateY(14px); }
-  .placa .p-logos { display: flex; justify-content: center; align-items: center; gap: 14px; }
-  .placa .p-logos img { width: 38%; margin: 0; }
-  .on .placa .p-sep { animation: aparecer .4s ease 1.05s forwards; }
-  .on .placa .p-prata { animation: entrar .55s cubic-bezier(.2, 1.3, .4, 1) 1.1s forwards; }
-
-  .placa::after {
-    content: ""; position: absolute; inset: 0; transform: translateX(-130%);
-    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .95) 50%, transparent 70%);
-  }
-  .on .placa::after { animation: reflexo 1.1s ease 1.7s forwards; }
-  .v-pular { font-size: .78rem; color: var(--muted); opacity: 0; }
-  .on .v-pular { animation: aparecer .6s ease 2s forwards; }
-  .v-susp { opacity: 0; transform: scale(.92); pointer-events: none; }
-  .v-susp p { font-family: Fraunces, Georgia, serif; font-style: italic; font-weight: 600; font-size: clamp(1.7rem, 8vw, 2.4rem); line-height: 1.15; margin: 0; }
-  .pontos { display: flex; gap: 10px; }
-  .pontos i { width: 12px; height: 12px; border-radius: 50%; background: var(--gold-3); animation: tambor .6s ease-in-out infinite; }
-  .pontos i:nth-child(2) { animation-delay: .12s; } .pontos i:nth-child(3) { animation-delay: .24s; }
-  #vinheta.suspense .v-patro { opacity: 0; transform: scale(.85); }
-  #vinheta.suspense .v-susp { opacity: 1; transform: none; }
-
-  .apoio { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
-  .apoio .logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-  .apoio span { text-transform: uppercase; letter-spacing: .2em; font-size: .64rem; font-weight: 700; color: var(--muted); }
-  .apoio img { height: 44px; width: auto; padding: 5px 8px; border-radius: 10px; background: #fff; }
-  .apoio .a-ouro { height: 56px; padding: 6px 12px; }
-  .apoio .logos img { height: 40px; }
-
-  /* ---------- Avisos ---------- */
-  .aviso { max-width: 360px; }
-  .aviso .grande { font-size: 4rem; }
-  .hidden { display: none !important; }
-
-  @keyframes flutuar { 50% { transform: translateY(-12px) rotate(-1.5deg); } }
-  @keyframes pulsar { 50% { transform: scale(1.18); opacity: .7; } }
-  @keyframes piscar { 50% { opacity: .45; } }
-  @keyframes tremer {
-    10%, 90% { transform: rotate(-3deg); } 20%, 80% { transform: rotate(5deg); }
-    30%, 50%, 70% { transform: rotate(-8deg) scale(1.04); } 40%, 60% { transform: rotate(8deg) scale(1.04); }
-  }
-  @keyframes voar { 30% { transform: translateY(-40px) rotate(-8deg); } 100% { transform: translate(140px, -420px) rotate(70deg); opacity: 0; } }
-  @keyframes raios { to { opacity: 1; transform: scale(1); } }
-  @keyframes girar { from { transform: rotate(0); } to { transform: rotate(360deg); } }
-  @keyframes afundar { to { transform: translateY(60px) scale(.85); opacity: .0; } }
-  @keyframes subir { to { opacity: 1; transform: none; } }
-  @keyframes letra { to { opacity: 1; transform: none; } }
-  @keyframes brilhar { from { background-position: 100% 0; } to { background-position: -200% 0; } }
-  @keyframes aparecer { to { opacity: 1; } }
-  @keyframes placa { to { opacity: 1; transform: none; } }
-  @keyframes entrar { to { opacity: 1; transform: none; } }
-  @keyframes reflexo { to { transform: translateX(130%); } }
-  @keyframes tambor { 50% { transform: translateY(-8px) scale(1.15); opacity: .55; } }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; }
-  }
-</style>
+<link rel="stylesheet" href="css/revelacao.css?v=10">
 </head>
 <body>
 <canvas id="neve"></canvas>
 <canvas id="confete"></canvas>
 
 <main id="app">
-  <div id="carregando" class="aviso"><div class="grande">🎁</div><p class="sub">Verificando seu link…</p></div>
+  <!-- Enquanto decifra o link -->
+  <div id="carregando" class="tela-aviso"><div class="icone-grande">🎁</div><p class="subtitulo">Verificando seu link…</p></div>
 
-  <div id="cena" class="hidden">
-    <div class="boasvindas">
-      <div class="evento" id="evento"></div>
+  <!-- Cena principal: boas-vindas, presente e (depois de aberto) o resultado -->
+  <div id="cena" class="oculto">
+    <div class="boas-vindas">
+      <div class="nome-do-evento" id="evento"></div>
       <h1>Olá, <em id="ola"></em>!</h1>
-      <p class="sub">Seu presente chegou. Antes de abrir, confira se ninguém está espiando. 👀</p>
+      <p class="subtitulo">Seu presente chegou. Antes de abrir, confira se ninguém está espiando. 👀</p>
     </div>
 
     <div class="palco">
@@ -231,179 +48,52 @@
         <div class="tampa"><div class="laco"><i></i><i></i><b></b></div></div>
       </button>
     </div>
-    <div class="dica">Toque no presente para abrir</div>
+    <div class="dica-tocar">Toque no presente para abrir</div>
 
     <section class="resultado" aria-live="polite">
       <div class="cartao">
-        <div class="tirou">Você tirou</div>
+        <div class="voce-tirou">Você tirou</div>
         <div class="nome" id="nome"></div>
-        <div class="grupo" id="grupo"></div>
-        <div class="infos" id="infos"></div>
-        <div class="apoio"><span>Oferecimento</span>
-          <img class="a-ouro" src="forushop.png" alt="forUshop">
-          <div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div>
-        </div>
+        <div class="grupo-do-evento" id="grupo"></div>
+        <div class="informacoes" id="infos"></div>
+        <div class="cartao-patrocinio" id="cartao-patrocinio"></div>
       </div>
       <div class="botoes"><button id="esconder">🙈 Esconder nome</button></div>
       <p class="segredo">🤫 Shhh! Guarde segredo até o dia da revelação.</p>
     </section>
   </div>
 
+  <!-- Vinheta estilo TV: oferecimento dos patrocinadores e suspense. Tocar pula. -->
   <div id="vinheta" aria-live="polite" role="status">
-    <div class="v-patro">
-      <div class="v-of">Este amigo secreto<br>tem o oferecimento de</div>
-      <div class="placa">
-        <div class="p-ouro"><img src="forushop.png" alt="forUshop"></div>
-        <div class="p-sep"></div>
-        <div class="p-prata"><div class="p-logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div></div>
-      </div>
-      <div class="v-pular">toque para pular</div>
+    <div class="vinheta-patrocinio">
+      <div class="vinheta-chamada">Este amigo secreto<br>tem o oferecimento de</div>
+      <div class="placa" id="placa"></div>
+      <div class="vinheta-pular">toque para pular</div>
     </div>
-    <div class="v-susp">
+    <div class="vinheta-suspense">
       <p>E quem você<br>tirou foi…</p>
       <div class="pontos"><i></i><i></i><i></i></div>
     </div>
   </div>
 
-  <div id="erro" class="aviso hidden">
-    <div class="grande">🕵️</div>
+  <!-- Link cortado, alterado ou inventado -->
+  <div id="erro" class="tela-aviso oculto">
+    <div class="icone-grande">🕵️</div>
     <h1>Esse link não abriu</h1>
-    <p class="sub">Ele pode ter sido cortado ao copiar ou alterado por algum engraçadinho. Abra exatamente como recebeu, ou peça ao organizador para reenviar.</p>
+    <p class="subtitulo">Ele pode ter sido cortado ao copiar ou alterado por algum engraçadinho. Abra exatamente como recebeu, ou peça ao organizador para reenviar.</p>
   </div>
-  <div id="vazio" class="aviso hidden">
-    <div class="grande">🎄</div>
+
+  <!-- Página aberta sem código (endereço principal do site) -->
+  <div id="vazio" class="tela-aviso oculto">
+    <div class="icone-grande">🎄</div>
     <h1>Amigo Secreto</h1>
-    <p class="sub">Para descobrir quem você tirou, abra o link pessoal que você recebeu no WhatsApp ou por SMS.</p>
-    <p class="sub" style="margin-top:28px;font-size:.85rem"><a href="painel.html" style="color:var(--gold-2)">Sou o organizador</a></p>
+    <p class="subtitulo">Para descobrir quem você tirou, abra o link pessoal que você recebeu no WhatsApp ou por SMS.</p>
+    <p class="subtitulo link-organizador"><a href="painel.html">Sou o organizador</a></p>
   </div>
 </main>
 
-<script src="sorteio.js?v=9"></script>
-<script>
-const $ = (id) => document.getElementById(id);
-const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// ---------- Neve ----------
-(function neve() {
-  const c = $('neve'), x = c.getContext('2d');
-  let W, H, flocos;
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  function tam() {
-    W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr;
-    flocos = Array.from({ length: Math.round(innerWidth / 9) }, () => ({
-      x: Math.random() * W, y: Math.random() * H, r: (Math.random() * 2.2 + .6) * dpr,
-      v: (Math.random() * .6 + .25) * dpr, d: Math.random() * Math.PI * 2, a: Math.random() * .5 + .3,
-    }));
-  }
-  tam(); addEventListener('resize', tam);
-  function quadro() {
-    x.clearRect(0, 0, W, H);
-    for (const f of flocos) {
-      f.y += f.v; f.d += .01; f.x += Math.sin(f.d) * .3 * dpr;
-      if (f.y > H + 5) { f.y = -5; f.x = Math.random() * W; }
-      x.globalAlpha = f.a; x.beginPath(); x.arc(f.x, f.y, f.r, 0, 7); x.fillStyle = '#fff'; x.fill();
-    }
-    if (!calmo) requestAnimationFrame(quadro);
-  }
-  quadro();
-})();
-
-// ---------- Confete ----------
-function confete(ox, oy) {
-  if (calmo) return;
-  const c = $('confete'), x = c.getContext('2d');
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  c.width = innerWidth * dpr; c.height = innerHeight * dpr;
-  const cores = ['#f5c542', '#ffe08a', '#e2453f', '#ffffff', '#3fae69', '#ff8fa3'];
-  const ps = Array.from({ length: 220 }, () => {
-    const ang = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.1, vel = (Math.random() * 13 + 7) * dpr;
-    return { x: ox * dpr, y: oy * dpr, vx: Math.cos(ang) * vel, vy: Math.sin(ang) * vel,
-      w: (Math.random() * 8 + 5) * dpr, h: (Math.random() * 5 + 3) * dpr, rot: Math.random() * 6, vr: (Math.random() - .5) * .4,
-      cor: cores[Math.floor(Math.random() * cores.length)], vida: 1 };
-  });
-  (function quadro() {
-    x.clearRect(0, 0, c.width, c.height);
-    let vivos = 0;
-    for (const p of ps) {
-      if (p.vida <= 0) continue;
-      vivos++;
-      p.vy += .32 * dpr; p.vx *= .985; p.vy *= .985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-      if (p.y > c.height * .6) p.vida -= .012;
-      x.save(); x.globalAlpha = Math.max(p.vida, 0); x.translate(p.x, p.y); x.rotate(p.rot);
-      x.scale(1, Math.cos(p.rot * 2)); x.fillStyle = p.cor; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); x.restore();
-    }
-    if (vivos) requestAnimationFrame(quadro); else x.clearRect(0, 0, c.width, c.height);
-  })();
-}
-
-// ---------- Fluxo ----------
-function mostrar(id) { ['carregando', 'cena', 'erro', 'vazio'].forEach(k => $(k).classList.toggle('hidden', k !== id)); }
-const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-(async function () {
-  const token = location.hash.slice(1);
-  if (!token) return mostrar('vazio');
-  let r;
-  try { r = await AmigoSecreto.abrir(token); }
-  catch { return mostrar('erro'); }
-  const d = r;
-
-  document.title = `🎁 ${d.n}, seu amigo secreto chegou!`;
-  $('evento').textContent = $('grupo').textContent = '🎄 ' + (d.e || 'Amigo Secreto') + ' 🎄';
-  $('ola').textContent = d.n;
-  [['📅', d.d], ['📍', d.l], ['💰', d.v]].forEach(([emo, txt]) => {
-    if (!txt) return;
-    const sp = document.createElement('span'); sp.textContent = `${emo} ${txt}`; $('infos').appendChild(sp);
-  });
-  // Letras agrupadas por palavra: a linha só quebra entre palavras, nunca no meio de uma.
-  let k = 0;
-  $('nome').innerHTML = d.a.split(' ').filter(Boolean).map(palavra => '<span class="palavra">' + Array.from(palavra).map(ch => {
-    const t = .45 + (k++) * .06;
-    return `<span style="animation-delay:${t}s, ${t}s">${esc(ch)}</span>`;
-  }).join('') + '</span>').join(' ');
-  const maiorPalavra = Math.max(...d.a.split(' ').map(w => w.length));
-  if (maiorPalavra > 9 || d.a.length > 16) $('nome').classList.add('longo');
-  mostrar('cena');
-
-  let aberto = false;
-  $('presente').onclick = () => {
-    if (aberto) return; aberto = true;
-    const app = $('app');
-    app.classList.add('abrindo');
-    if (navigator.vibrate) navigator.vibrate([30, 40, 30, 40, 60]);
-    // Sequência estilo TV: presente abre → oferecimento → suspense → nome.
-    const vin = $('vinheta'), timers = [];
-    const depois = (ms, fn) => timers.push(setTimeout(fn, ms));
-    let revelado = false;
-    const revelar = () => {
-      if (revelado) return; revelado = true;
-      timers.forEach(clearTimeout);
-      vin.classList.remove('on', 'suspense');
-      app.classList.add('final', 'revelado');
-      requestAnimationFrame(() => {
-        const c = document.querySelector('.cartao').getBoundingClientRect();
-        confete(innerWidth / 2, Math.max(120, c.top + 40));
-      });
-      if (navigator.vibrate) navigator.vibrate(120);
-    };
-    vin.onclick = revelar;
-    depois(calmo ? 0 : 900, () => {
-      app.classList.remove('abrindo'); app.classList.add('aberto');
-      depois(450, () => app.classList.add('final'));
-      depois(calmo ? 0 : 500, () => vin.classList.add('on'));
-      depois(calmo ? 2200 : 3800, () => {
-        vin.classList.add('suspense');
-        if (navigator.vibrate) navigator.vibrate([40, 80, 40, 80, 40, 80, 40, 80]);
-      });
-      depois(calmo ? 2800 : 5500, revelar);
-    });
-  };
-
-  $('esconder').onclick = () => {
-    const n = $('nome'), esc = n.classList.toggle('escondido');
-    $('esconder').textContent = esc ? '👀 Mostrar nome' : '🙈 Esconder nome';
-  };
-})();
-</script>
+<script src="js/sorteio.js?v=10"></script>
+<script src="js/patrocinadores.js?v=10"></script>
+<script src="js/revelacao.js?v=10"></script>
 </body>
 </html>

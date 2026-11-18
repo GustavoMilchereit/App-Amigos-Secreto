@@ -1,133 +1,48 @@
 <!doctype html>
+<!--
+  Painel do organizador.
+  Aqui o organizador cadastra o evento e os participantes, faz o sorteio e
+  envia a cada pessoa o link pessoal (WhatsApp, SMS ou copiar).
+
+  Estilo: css/painel.css · Lógica da tela: js/painel.js
+  Regras do sorteio e criptografia: js/sorteio.js · Logos: js/patrocinadores.js
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amigo Secreto: Painel</title>
-<style>
-  :root {
-    --bg: #f6f3ee; --card: #ffffff; --text: #1f1d1a; --muted: #6b665e;
-    --line: #e3ddd3; --accent: #b3261e; --accent-2: #1e6b3a; --warn: #8a5a00; --warn-bg: #fff4dc;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #171614; --card: #22201d; --text: #f1ede6; --muted: #a59f95;
-      --line: #3a3631; --accent: #e5534b; --accent-2: #3fae69; --warn: #f0c060; --warn-bg: #3a2f17; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.7rem; margin: 0 0 4px; }
-  h2 { font-size: 1.15rem; margin: 0 0 12px; }
-  .sub { color: var(--muted); margin: 0 0 24px; }
-  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 18px; }
-  label { display: block; font-weight: 600; font-size: .9rem; margin: 10px 0 4px; }
-  input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
-    background: var(--bg); color: var(--text); font: inherit; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
-  button, .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-weight: 600;
-    cursor: pointer; text-decoration: none; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn.wa { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-  .hint { color: var(--muted); font-size: .88rem; margin: 6px 0 0; }
-  .msg { padding: 10px 14px; border-radius: 8px; margin-top: 12px; font-size: .92rem; }
-  .msg.err { background: var(--warn-bg); color: var(--warn); }
-  .msg.ok { background: color-mix(in srgb, var(--accent-2) 15%, transparent); color: var(--accent-2); }
-  table { width: 100%; border-collapse: collapse; font-size: .93rem; }
-  th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  th { color: var(--muted); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
-  td .actions { margin: 0; gap: 6px; }
-  td .btn, td button { padding: 6px 10px; font-size: .85rem; }
-  button.copiado { background: color-mix(in srgb, var(--accent-2) 15%, transparent); border-color: var(--accent-2); color: var(--accent-2); }
-  tr.sent td:first-child::after { content: " ✓"; color: var(--accent-2); }
-  .hidden { display: none; }
-  .table-wrap { overflow-x: auto; }
-  .topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
-  .topo .sub { margin-bottom: 0; }
-  .apoio-topo { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 14px 12px;
-    background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .06); }
-  .apoio-topo .faixa { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-  .apoio-topo .faixa + .faixa { padding-top: 8px; border-top: 1px solid #ece7df; }
-  .apoio-topo .logos { display: flex; align-items: center; gap: 10px; }
-  .apoio-topo img { display: block; width: auto; }
-  .apoio-topo .rotulo { font-size: .62rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #6b665e; }
-  .apoio-topo .ouro img { height: 52px; }
-  .apoio-topo .prata img { height: 40px; }
-  @media (max-width: 560px) {
-    .topo { flex-direction: column; gap: 12px; }
-    .apoio-topo { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; align-self: stretch; gap: 6px 14px; padding: 8px 10px; }
-    .apoio-topo .rotulo { flex-basis: 100%; text-align: center; }
-    .apoio-topo .faixa + .faixa { padding: 0 0 0 14px; border-top: 0; border-left: 1px solid #ece7df; }
-    .apoio-topo .ouro img { height: 44px; }
-    .apoio-topo .prata img { height: 34px; }
-    .topo h1 { font-size: 1.45rem; }
-  }
-  .contador { font-weight: 500; color: var(--muted); font-size: .9rem; }
-  .ajuda { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .ajuda > div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: .86rem; }
-  .ajuda p { margin: 6px 0 0; color: var(--muted); }
-  .ajuda .ex { color: var(--text); font-size: .82rem; }
-  .grade { display: grid; grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.2fr) 34px; gap: 8px; align-items: start; }
-  .grade.cab { font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 0 0 6px; }
-  .lin { padding: 6px 0; border-top: 1px solid var(--line); }
-  .lin .num { color: var(--muted); font-size: .85rem; padding-top: 11px; text-align: right; }
-  .lin input { padding: 8px 10px; }
-  .lin input.bad, .tags.bad { border-color: var(--accent); }
-  .lin input.meh, .tags.meh { border-color: #d49a00; }
-  .tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 40px; padding: 4px 6px;
-    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); cursor: text; }
-  .tags .ent { flex: 1; min-width: 90px; border: 0; padding: 4px; background: transparent; outline: none; }
-  .tag { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 2px 4px 2px 9px; border-radius: 999px;
-    background: color-mix(in srgb, var(--accent-2) 16%, transparent); color: var(--text); font-size: .82rem; line-height: 1.4; }
-  .tag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tag.warn { background: var(--warn-bg); color: var(--warn); }
-  .tag button { border: 0; background: none; padding: 0 5px; font-size: 1rem; line-height: 1; color: inherit; cursor: pointer; }
-  .st { font-size: .76rem; line-height: 1.3; margin-top: 3px; min-height: 1em; color: var(--muted); }
-  .st.ok { color: var(--accent-2); } .st.bad { color: var(--accent); } .st.meh { color: var(--warn); }
-  .lin .del { padding: 7px 0; width: 34px; justify-content: center; color: var(--muted); }
-  .alerta { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-top: 12px; font-size: .9rem; }
-  .alerta .actions { margin-top: 8px; gap: 6px; }
-  .alerta button { padding: 6px 10px; font-size: .84rem; }
-  @media (max-width: 640px) {
-    .ajuda { grid-template-columns: 1fr; }
-    .grade.cab { display: none; }
-    .grade.lin { grid-template-columns: 22px minmax(0, 1fr) 34px; grid-template-areas: "n nome x" ". tel ." ". grupo ."; row-gap: 6px; }
-    .lin .num { grid-area: n; } .lin .c-nome { grid-area: nome; } .lin .c-tel { grid-area: tel; }
-    .lin .c-grupo { grid-area: grupo; } .lin .del { grid-area: x; }
-  }
-</style>
+<link rel="stylesheet" href="css/painel.css?v=10">
 </head>
 <body>
 <main>
-  <header class="topo">
+
+  <!-- Cabeçalho: título e selo de patrocinadores (preenchido por js/painel.js) -->
+  <header class="cabecalho">
     <div>
       <h1>🎁 Amigo Secreto</h1>
-      <p class="sub">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
+      <p class="subtitulo">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
     </div>
-    <div class="apoio-topo" aria-label="Patrocinadores">
-      <span class="rotulo">Apoio</span>
-      <div class="faixa ouro"><div class="logos"><img src="forushop.png" alt="forUshop"></div></div>
-      <div class="faixa prata"><div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div></div>
-    </div>
+    <div id="patrocinio" class="patrocinio oculto" aria-label="Patrocinadores"></div>
   </header>
 
+  <!-- Passo 1: dados do evento. Tudo aqui vai na mensagem e na página de cada pessoa. -->
   <section id="sec-evento">
     <h2>1. Evento</h2>
-    <div class="row">
+    <div class="duas-colunas">
       <div><label for="ev-nome">Nome do amigo secreto</label><input id="ev-nome" placeholder="Ex.: Amigo Secreto da Família"></div>
       <div><label for="ev-data">📅 Data e horário</label><input id="ev-data" placeholder="Ex.: 24/12 às 20h"></div>
     </div>
-    <div class="row">
+    <div class="duas-colunas">
       <div><label for="ev-local">📍 Local</label><input id="ev-local" placeholder="Ex.: Casa da vó"></div>
       <div><label for="ev-valor">💰 Valor sugerido</label><input id="ev-valor" placeholder="Ex.: R$ 100"></div>
     </div>
-    <label for="ev-url">Endereço da página de revelação</label><input id="ev-url" placeholder="Deixe vazio se abriu este painel pelo site">
-    <p class="hint">O endereço precisa estar publicado na internet (ex.: GitHub Pages ou Netlify), senão os links não abrem no celular dos participantes. Preencha tudo <b>antes</b> de sortear: nome, data, local e valor aparecem na mensagem e na página de cada pessoa.</p>
+    <label for="ev-url">Endereço da página de revelação</label>
+    <input id="ev-url" placeholder="Deixe vazio se abriu este painel pelo site">
+    <p class="dica">O endereço precisa estar publicado na internet (ex.: GitHub Pages ou Netlify), senão os links não abrem no celular dos participantes. Preencha tudo <b>antes</b> de sortear: nome, data, local e valor aparecem na mensagem e na página de cada pessoa.</p>
   </section>
 
+  <!-- Passo 2: participantes. As linhas da tabela são criadas por js/painel.js. -->
   <section id="sec-pessoas">
     <h2>2. Participantes <span class="contador" id="contador"></span></h2>
 
@@ -135,397 +50,63 @@
       <div>
         <b>📞 Telefone</b>
         <p>Digite como preferir: <b>com ou sem</b> traço, espaço, parênteses no DDD ou +55. O <b>DDD é obrigatório</b>, porque sem ele o WhatsApp não acha o número.</p>
-        <p class="ex">✅ (11) 98765-4321 · 11 98765-4321 · 11987654321 · +55 11 98765-4321<br>❌ 98765-4321 (sem DDD)</p>
+        <p class="exemplo">✅ (11) 98765-4321 · 11 98765-4321 · 11987654321 · +55 11 98765-4321<br>❌ 98765-4321 (sem DDD)</p>
         <p>Número do exterior: comece com + e o código do país (ex.: +1 415 555 0100).</p>
       </div>
       <div>
         <b>👥 Grupo (opcional)</b>
         <p>Pessoas do mesmo grupo <b>não tiram umas às outras</b> (casais, pais e filhos pequenos). O grupo precisa estar escrito <b>igual</b> para todos. Um erro de digitação separa o casal:</p>
-        <p class="ex">"Casal Otávio e Helena" ≠ "Casal Otávio e Helna" → viram 2 grupos, e o casal pode se tirar.</p>
+        <p class="exemplo">"Casal Otávio e Helena" ≠ "Casal Otávio e Helna" → viram 2 grupos, e o casal pode se tirar.</p>
         <p>Para evitar: <b>escolha o grupo na lista</b> que aparece ao digitar e confira o "não tira: …" embaixo. Maiúsculas, acentos e espaços extras são ignorados. Grupos parecidos e grupos de uma pessoa só geram alerta.</p>
         <p><b>Mais de um grupo:</b> digite o grupo e aperte <b>Enter</b> (ou vírgula), depois digite o próximo. Ex.: Otávio em "Casal Otávio e Helena" e em "Pais e filhos Souza".</p>
       </div>
     </div>
 
-    <div class="grade cab" aria-hidden="true"><span>#</span><span>Nome completo</span><span>Telefone</span><span>Grupo</span><span></span></div>
+    <div class="grade-participantes tabela-cabecalho" aria-hidden="true">
+      <span>#</span><span>Nome completo</span><span>Telefone</span><span>Grupo</span><span></span>
+    </div>
     <div id="linhas"></div>
     <datalist id="lista-grupos"></datalist>
 
-    <div class="actions">
+    <div class="acoes">
       <button id="btn-add">＋ Adicionar pessoa</button>
-      <label class="btn" style="margin:0">📄 Carregar CSV<input type="file" id="csv" accept=".csv,.txt" class="hidden"></label>
+      <label class="botao">📄 Carregar CSV<input type="file" id="csv" accept=".csv,.txt" class="oculto"></label>
       <button id="btn-limpar">🗑 Limpar tabela</button>
     </div>
-    <p class="hint">Dica: dá para copiar as 3 colunas do Excel ou do Google Sheets e colar na primeira célula de nome.</p>
+    <p class="dica">Dica: dá para copiar as 3 colunas do Excel ou do Google Sheets e colar na primeira célula de nome.</p>
 
     <div id="alertas"></div>
-    <div class="actions"><button class="primary" id="btn-sortear">🎲 Sortear</button></div>
-    <div id="feedback"></div>
+    <div class="acoes"><button class="botao-principal" id="btn-sortear">🎲 Sortear</button></div>
+    <div id="mensagem"></div>
   </section>
 
-  <section id="sec-links" class="hidden">
+  <!-- Passo 3: envio. Aparece depois do sorteio; as linhas são criadas por js/painel.js. -->
+  <section id="sec-links" class="oculto">
     <h2>3. Enviar os links</h2>
-    <p class="hint" style="margin-top:0">A mensagem leva só o link pessoal cifrado. Este painel não guarda quem tirou quem. Não abra os links dos outros.</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Participante</th><th>Telefone</th><th>Enviar</th></tr></thead>
-      <tbody id="tabela"></tbody>
-    </table></div>
-    <div class="actions">
+    <p class="dica no-topo">A mensagem leva só o link pessoal cifrado. Este painel não guarda quem tirou quem. Não abra os links dos outros.</p>
+    <div class="rolagem-horizontal">
+      <table>
+        <thead><tr><th>Participante</th><th>Telefone</th><th>Enviar</th></tr></thead>
+        <tbody id="tabela-envio"></tbody>
+      </table>
+    </div>
+    <div class="acoes">
       <button id="btn-backup">🔒 Baixar backup com senha</button>
       <button id="btn-refazer">↺ Refazer sorteio</button>
     </div>
-    <p class="hint">Os links ficam salvos neste navegador para reenvio. Para reenviar de outro aparelho, use o backup.</p>
+    <p class="dica">Os links ficam salvos neste navegador para reenvio. Para reenviar de outro aparelho, use o backup.</p>
   </section>
-  <p class="hint" style="text-align:center"><label class="btn" style="display:inline-flex;margin:0">📂 Restaurar backup<input type="file" id="arq-backup" class="hidden"></label>
-    <button id="btn-zero" style="margin-left:6px">🆕 Começar do zero</button></p>
-  <p class="hint" style="text-align:center">Use "Começar do zero" para organizar outro amigo secreto neste mesmo navegador. Antes, termine de enviar os links do atual.</p>
+
+  <!-- Rodapé: restaurar backup e começar outro amigo secreto. -->
+  <p class="dica rodape">
+    <label class="botao">📂 Restaurar backup<input type="file" id="arq-backup" class="oculto"></label>
+    <button id="btn-zero">🆕 Começar do zero</button>
+  </p>
+  <p class="dica rodape">Use "Começar do zero" para organizar outro amigo secreto neste mesmo navegador. Antes, termine de enviar os links do atual.</p>
 </main>
 
-<script src="sorteio.js?v=9"></script>
-<script>
-const $ = (id) => document.getElementById(id);
-const STORE = 'amigo-secreto-v3';
-const fields = ['ev-nome', 'ev-data', 'ev-local', 'ev-valor', 'ev-url'];
-try { ['amigo-secreto-v1', 'amigo-secreto-v2'].forEach(k => localStorage.removeItem(k)); } catch {} // formatos antigos
-
-function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } }
-function save(extra = {}) {
-  const st = load();
-  fields.forEach(f => st[f] = $(f).value);
-  try { localStorage.setItem(STORE, JSON.stringify({ ...st, ...extra })); } catch {}
-}
-function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-function feedback(html, kind) { $('feedback').innerHTML = html ? `<div class="msg ${kind}">${html}</div>` : ''; }
-function evento() { return { e: $('ev-nome').value.trim(), d: $('ev-data').value.trim(), l: $('ev-local').value.trim(), v: $('ev-valor').value.trim() }; }
-
-function baseUrl() {
-  let u = $('ev-url').value.trim();
-  if (!u && location.protocol.startsWith('http')) u = location.href.replace(/[^/]*([?#].*)?$/, '');
-  u = u.replace(/(index|painel|revelar)\.html$/, '');
-  if (u && !u.endsWith('/')) u += '/';
-  return u;
-}
-
-// Copia para a área de transferência. Pode ser usado quantas vezes quiser: o botão
-// mostra "Copiado!" por 2 segundos e volta ao normal.
-async function copiar(texto) {
-  try { await navigator.clipboard.writeText(texto); return true; } catch {}
-  try { // alternativa para navegadores que bloqueiam a API moderna
-    const ta = document.createElement('textarea');
-    ta.value = texto; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, texto.length);
-    const ok = document.execCommand('copy'); ta.remove(); if (ok) return true;
-  } catch {}
-  prompt('Não consegui copiar sozinho. Selecione o texto abaixo e copie:', texto);
-  return false;
-}
-function botaoCopiar(box, rotulo, texto, aoCopiar) {
-  const b = document.createElement('button');
-  b.textContent = rotulo;
-  b.onclick = async () => {
-    aoCopiar && aoCopiar();
-    if (await copiar(texto)) {
-      clearTimeout(b._t); b.textContent = '✅ Copiado!'; b.classList.add('copiado');
-      b._t = setTimeout(() => { b.textContent = rotulo; b.classList.remove('copiado'); }, 2000);
-    }
-  };
-  box.appendChild(b);
-  return b;
-}
-
-function render() {
-  const st = load(), envio = st.envio;
-  $('sec-links').classList.toggle('hidden', !envio);
-  if (!envio) return;
-  const base = baseUrl();
-  const sent = envio.enviados || {};
-  $('tabela').innerHTML = '';
-  envio.itens.forEach((it, i) => {
-    const link = base + '#' + it.token;
-    const texto = AmigoSecreto.mensagem(it.nome, envio.evento, link);
-    const tr = document.createElement('tr');
-    if (sent[i]) tr.className = 'sent';
-    tr.innerHTML = `<td>${esc(it.nome)}</td><td>+${esc(it.telefone)}</td><td><div class="actions"></div></td>`;
-    const box = tr.querySelector('.actions');
-    const marcar = () => { sent[i] = true; envio.enviados = sent; save({ envio }); tr.className = 'sent'; };
-    const mk = (label, href, cls) => {
-      const a = document.createElement('a');
-      a.className = 'btn ' + (cls || ''); a.textContent = label; a.href = href; a.target = '_blank'; a.rel = 'noopener';
-      a.onclick = marcar; box.appendChild(a);
-    };
-    mk('WhatsApp', `https://wa.me/${it.telefone}?text=${encodeURIComponent(texto)}`, 'wa');
-    mk('SMS', `sms:+${it.telefone}?&body=${encodeURIComponent(texto)}`);
-    botaoCopiar(box, 'Copiar mensagem', texto, marcar);
-    botaoCopiar(box, 'Copiar link', link, marcar);
-    $('tabela').appendChild(tr);
-  });
-  if (!base) feedback('Preencha o <b>endereço da página de revelação</b> no passo 1. Sem ele, os links não funcionam.', 'err');
-}
-
-
-// ---------- Tabela de participantes ----------
-let linhas = [];
-let ignorados = [];
-
-function linhaVazia() { return { nome: '', tel: '', grupo: '' }; }
-function salvarLinhas() { save({ linhas, ignorados }); }
-function validarTabela() { return AmigoSecreto.validar(linhas, ignorados); }
-
-function garantirLinhaFinal() {
-  const ult = linhas[linhas.length - 1];
-  if (!ult || ult.nome || ult.tel || ult.grupo) { linhas.push(linhaVazia()); return true; }
-  return false;
-}
-
-function montarLinhas() {
-  garantirLinhaFinal();
-  const box = $('linhas'); box.innerHTML = '';
-  linhas.forEach((l, i) => box.appendChild(criarLinha(i)));
-  atualizarStatus();
-}
-
-function gruposDe(l) { return AmigoSecreto.separarGrupos(l.grupo); }
-
-function criarLinha(i) {
-  const div = document.createElement('div');
-  div.className = 'grade lin'; div.dataset.i = i;
-  div.innerHTML = `<span class="num">${i + 1}</span>
-    <div class="c-nome"><input data-f="nome" placeholder="Nome completo" autocomplete="off"><div class="st"></div></div>
-    <div class="c-tel"><input data-f="tel" placeholder="(11) 98765-4321" inputmode="tel" autocomplete="off"><div class="st"></div></div>
-    <div class="c-grupo"><div class="tags"><input class="ent" placeholder="Opcional" list="lista-grupos" autocomplete="off" enterkeyhint="done" aria-label="Adicionar grupo"></div><div class="st"></div></div>
-    <button class="del" title="Remover pessoa" aria-label="Remover pessoa">✕</button>`;
-  const linha = () => linhas[+div.dataset.i];
-
-  div.querySelectorAll('input[data-f]').forEach(inp => {
-    inp.value = linha()[inp.dataset.f];
-    inp.addEventListener('input', () => {
-      linha()[inp.dataset.f] = inp.value;
-      if (garantirLinhaFinal()) $('linhas').appendChild(criarLinha(linhas.length - 1));
-      salvarLinhas(); atualizarStatus();
-    });
-    inp.addEventListener('paste', (e) => {
-      const txt = (e.clipboardData || window.clipboardData).getData('text');
-      if (!/[\t\n]/.test(txt.trim())) return; // colagem simples de um campo
-      e.preventDefault();
-      const novas = AmigoSecreto.linhasDeTexto(txt);
-      let pos = +div.dataset.i;
-      novas.forEach(n => { linhas[pos] = n; pos++; });
-      salvarLinhas(); montarLinhas();
-      feedback(`${novas.length} pessoa(s) coladas. Confira os alertas de cada linha.`, 'ok');
-    });
-  });
-
-  // Grupos como etiquetas: digite e aperte Enter (ou vírgula) para adicionar; × remove.
-  const tags = div.querySelector('.tags'), ent = div.querySelector('.ent');
-  const desenhar = () => {
-    tags.querySelectorAll('.tag').forEach(t => t.remove());
-    gruposDe(linha()).forEach((g, j) => {
-      const t = document.createElement('span');
-      t.className = 'tag'; t.dataset.chave = AmigoSecreto.normalizarGrupo(g);
-      t.innerHTML = `<span>${esc(g)}</span><button type="button" aria-label="Remover grupo ${esc(g)}">×</button>`;
-      t.querySelector('button').onclick = () => { const gs = gruposDe(linha()); gs.splice(j, 1); definir(gs); };
-      tags.insertBefore(t, ent);
-    });
-    ent.placeholder = gruposDe(linha()).length ? '+ outro grupo' : 'Opcional';
-  };
-  const definir = (gs) => {
-    linha().grupo = AmigoSecreto.separarGrupos(gs.join(',')).join(', ');
-    if (garantirLinhaFinal()) $('linhas').appendChild(criarLinha(linhas.length - 1));
-    salvarLinhas(); desenhar(); atualizarStatus();
-  };
-  const adicionar = () => {
-    const txt = ent.value; ent.value = '';
-    if (txt.trim()) definir([...gruposDe(linha()), ...txt.split(',')]);
-  };
-  ent.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); adicionar(); }
-    else if (e.key === 'Backspace' && !ent.value && gruposDe(linha()).length) { definir(gruposDe(linha()).slice(0, -1)); }
-  });
-  ent.addEventListener('input', () => { if (ent.value.includes(',')) adicionar(); });
-  ent.addEventListener('change', adicionar); // escolha na lista ou ao sair do campo
-  tags.addEventListener('click', (e) => { if (e.target === tags) ent.focus(); });
-  desenhar();
-
-  div.querySelector('.del').onclick = () => {
-    linhas.splice(+div.dataset.i, 1);
-    salvarLinhas(); montarLinhas();
-  };
-  return div;
-}
-
-function atualizarStatus() {
-  const v = validarTabela();
-  const porLinha = {};
-  const marca = (i, campo, tipo, msg) => {
-    const k = i + ':' + campo;
-    if (!porLinha[k] || tipo === 'bad') porLinha[k] = { tipo, msg };
-  };
-  v.avisos.forEach(a => marca(a.linha, a.campo, 'meh', '⚠ ' + a.msg));
-  v.erros.forEach(e => { if (e.linha >= 0) marca(e.linha, e.campo, 'bad', '✕ ' + e.msg); });
-
-  const gruposDaLinha = {};
-  v.grupos.forEach(g => g.membros.forEach(m => { (gruposDaLinha[m.linha] = gruposDaLinha[m.linha] || []).push(g); }));
-  const suspeitos = new Set(v.suspeitos.flatMap(p => [p.a.chave, p.b.chave]));
-
-  document.querySelectorAll('#linhas .lin').forEach(div => {
-    const i = +div.dataset.i, l = linhas[i];
-    const vazia = !l.nome.trim() && !l.tel.trim() && !gruposDe(l).length;
-    const set = (campo, tipo, msg) => {
-      const cel = div.querySelector('.c-' + campo);
-      const alvo = campo === 'grupo' ? cel.querySelector('.tags') : cel.querySelector('input');
-      alvo.classList.remove('bad', 'meh'); if (tipo === 'bad' || tipo === 'meh') alvo.classList.add(tipo);
-      const st = cel.querySelector('.st'); st.className = 'st ' + (tipo || ''); st.textContent = msg || '';
-    };
-    if (vazia) { ['nome', 'tel', 'grupo'].forEach(c => set(c, '', '')); return; }
-    const pn = porLinha[i + ':nome']; set('nome', pn && pn.tipo, pn && pn.msg);
-    const pt = porLinha[i + ':tel'];
-    if (pt) set('tel', pt.tipo, pt.msg);
-    else set('tel', 'ok', '✓ ' + AmigoSecreto.analisarTelefone(l.tel).exibir);
-
-    const gs = gruposDaLinha[i] || [];
-    div.querySelectorAll('.tag').forEach(t => {
-      const g = gs.find(x => x.chave === t.dataset.chave);
-      t.classList.toggle('warn', !!g && (suspeitos.has(g.chave) || g.membros.length === 1));
-    });
-    if (!gs.length) set('grupo', '', 'sem grupo');
-    else {
-      const parecido = gs.find(g => suspeitos.has(g.chave));
-      const sozinho = gs.find(g => g.membros.length === 1 && !suspeitos.has(g.chave));
-      const outros = [...new Set(gs.flatMap(g => g.membros.filter(m => m.linha !== i).map(m => m.nome.split(' ')[0])))];
-      if (parecido) set('grupo', 'meh', `⚠ "${parecido.rotulo}" parecido com outro grupo (veja abaixo)`);
-      else if (sozinho) set('grupo', 'meh', `⚠ ninguém mais em "${sozinho.rotulo}"`);
-      else set('grupo', 'ok', '✓ não tira: ' + outros.join(', '));
-    }
-  });
-
-  // Lista de grupos para escolher ao digitar.
-  $('lista-grupos').innerHTML = v.grupos.map(g => `<option value="${esc(g.rotulo)}">`).join('');
-  const n = v.pessoas.length;
-  $('contador').textContent = n ? `(${n} ${n === 1 ? 'pessoa' : 'pessoas'})` : '';
-
-  // Alertas de grupo com ações.
-  const box = $('alertas'); box.innerHTML = '';
-  const primeiros = (g) => esc(g.membros.map(m => m.nome.split(' ')[0]).join(', '));
-  v.suspeitos.forEach(p => {
-    const d = document.createElement('div'); d.className = 'alerta';
-    d.innerHTML = `⚠ Os grupos <b>"${esc(p.a.rotulo)}"</b> (${primeiros(p.a)}) e <b>"${esc(p.b.rotulo)}"</b> (${primeiros(p.b)}) são quase iguais. Erro de digitação?<div class="actions"></div>`;
-    const acoes = d.querySelector('.actions');
-    const btn = (txt, fn) => { const b = document.createElement('button'); b.textContent = txt; b.onclick = fn; acoes.appendChild(b); };
-    btn(`Usar "${p.a.rotulo}" para todos`, () => unificar(p.b.chave, p.a.rotulo));
-    btn(`Usar "${p.b.rotulo}" para todos`, () => unificar(p.a.chave, p.b.rotulo));
-    btn('São grupos diferentes', () => { ignorados.push(p.par); salvarLinhas(); atualizarStatus(); });
-    box.appendChild(d);
-  });
-  if (v.sozinhos.length) {
-    const d = document.createElement('div'); d.className = 'alerta';
-    d.innerHTML = '⚠ ' + v.sozinhos.map(g => `<b>"${esc(g.rotulo)}"</b> só tem ${primeiros(g)}`).join('; ') +
-      '. Grupo serve para impedir que pessoas se tirem, então precisa de 2 ou mais. Confira se não é erro de digitação, ou remova esse grupo (×).';
-    box.appendChild(d);
-  }
-}
-
-function unificar(chaveDe, rotuloPara) {
-  linhas.forEach(l => {
-    l.grupo = AmigoSecreto.separarGrupos(gruposDe(l).map(g => AmigoSecreto.normalizarGrupo(g) === chaveDe ? rotuloPara : g).join(',')).join(', ');
-  });
-  salvarLinhas(); montarLinhas();
-}
-
-$('btn-add').onclick = () => {
-  linhas.push(linhaVazia()); salvarLinhas(); montarLinhas();
-  const ins = document.querySelectorAll('#linhas .lin input[data-f="nome"]');
-  ins[ins.length - 2 >= 0 ? ins.length - 2 : 0].focus();
-};
-$('btn-limpar').onclick = () => {
-  if (!confirm('Apagar todos os participantes da tabela?')) return;
-  linhas = []; ignorados = []; salvarLinhas(); montarLinhas(); feedback('');
-};
-
-$('btn-sortear').onclick = async () => {
-  const st = load();
-  if (st.envio && !confirm('Já existe um sorteio. Sortear de novo invalida os links enviados. Continuar?')) return;
-  const v = validarTabela();
-  if (v.erros.length) {
-    const lista = v.erros.slice(0, 8).map(e => (e.linha >= 0 ? `Linha ${e.linha + 1}: ` : '') + esc(e.msg)).join('<br>');
-    return feedback(`Corrija antes de sortear:<br>${lista}${v.erros.length > 8 ? '<br>…' : ''}`, 'err');
-  }
-  const pendentes = v.suspeitos.length + v.sozinhos.length;
-  if (pendentes && !confirm(`Há ${pendentes} alerta(s) de grupo sem resolver. Um erro de grupo pode fazer um casal se tirar. Sortear mesmo assim?`)) return;
-  const pessoas = v.pessoas;
-  if (!$('ev-nome').value.trim()) { $('ev-nome').focus(); return feedback('Dê um nome ao amigo secreto no passo 1. Ele aparece na mensagem e na página de cada pessoa.', 'err'); }
-  try {
-    $('btn-sortear').disabled = true;
-    const ev = evento();
-    const pares = AmigoSecreto.sortear(pessoas);
-    const itens = [];
-    for (const par of pares) {
-      itens.push({ nome: par.de.nome, telefone: par.de.telefone,
-        token: await AmigoSecreto.selar({ n: par.de.nome, a: par.para.nome, ...ev }) });
-    }
-    // "pares" sai de escopo aqui: só os links cifrados ficam salvos.
-    save({ envio: { evento: ev, itens, enviados: {} } });
-    feedback(`Sorteio feito com ${pessoas.length} participantes. Ninguém tirou a si mesmo nem alguém do próprio grupo, e a revelação forma uma roda única.`, 'ok');
-    render();
-  } catch (e) { feedback(esc(e.message), 'err'); }
-  finally { $('btn-sortear').disabled = false; }
-};
-
-$('btn-refazer').onclick = () => {
-  if (!confirm('Apagar o sorteio atual? Avise os participantes para ignorar os links antigos.')) return;
-  save({ envio: null }); feedback(''); render();
-};
-
-$('btn-zero').onclick = () => {
-  const st = load();
-  const aviso = st.envio ? 'Isso apaga o evento, a tabela e o sorteio atual (os links já enviados continuam abrindo, mas você não poderá reenviá-los). Continuar?' : 'Apagar o evento e a tabela para começar outro amigo secreto?';
-  if (!confirm(aviso)) return;
-  try { localStorage.removeItem(STORE); } catch {}
-  location.reload();
-};
-
-$('btn-backup').onclick = async () => {
-  const senha = prompt('Crie uma senha para o backup (mínimo 6 caracteres):');
-  if (!senha) return;
-  if (senha.length < 6) return alert('Senha muito curta.');
-  const conteudo = await AmigoSecreto.cifrarComSenha(load(), senha);
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([conteudo], { type: 'text/plain' }));
-  a.download = 'backup-amigo-secreto.txt'; a.click();
-};
-
-$('arq-backup').onchange = async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  const senha = prompt('Senha do backup:'); if (!senha) return;
-  try {
-    const st = await AmigoSecreto.decifrarComSenha(await f.text(), senha);
-    localStorage.setItem(STORE, JSON.stringify(st));
-    fields.forEach(k => { if (st[k] != null) $(k).value = st[k]; });
-    linhas = st.linhas || []; ignorados = st.ignorados || []; montarLinhas();
-    feedback('Backup restaurado.', 'ok'); render();
-  } catch { feedback('Senha incorreta ou arquivo inválido.', 'err'); }
-  e.target.value = '';
-};
-
-$('csv').onchange = async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  const novas = AmigoSecreto.linhasDeTexto(await f.text());
-  const temDados = linhas.some(l => l.nome || l.tel || l.grupo);
-  if (temDados && !confirm(`Substituir a tabela atual pelas ${novas.length} pessoas do arquivo?`)) { e.target.value = ''; return; }
-  linhas = novas; salvarLinhas(); montarLinhas(); e.target.value = '';
-  feedback(`${novas.length} pessoa(s) carregadas do arquivo. Confira os alertas de cada linha.`, 'ok');
-};
-
-fields.forEach(f => $(f).addEventListener('input', () => { save(); if (f === 'ev-url') render(); }));
-
-(function init() {
-  const st = load();
-  fields.forEach(f => { if (st[f] != null) $(f).value = st[f]; });
-  // Migra a lista antiga (texto) para a tabela.
-  linhas = st.linhas || (st.pessoas ? AmigoSecreto.linhasDeTexto(st.pessoas) : []);
-  ignorados = st.ignorados || [];
-  montarLinhas();
-  render();
-})();
-</script>
+<script src="js/sorteio.js?v=10"></script>
+<script src="js/patrocinadores.js?v=10"></script>
+<script src="js/painel.js?v=10"></script>
 </body>
 </html>

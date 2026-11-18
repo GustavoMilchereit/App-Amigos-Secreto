@@ -37,7 +37,32 @@ O sorteio fica salvo no navegador. Para reenviar a alguém que perdeu a mensagem
 - O organizador tecnicamente pode abrir os links. O app só garante que ele não veja sem querer.
 - O envio é semiautomático, um clique por pessoa.
 
+## Estrutura do projeto
+
+```
+index.html                  Página de revelação (o que cada participante abre)
+painel.html                 Painel do organizador (evento, participantes, sorteio, envio)
+css/
+  painel.css                Estilo do painel
+  revelacao.css             Estilo e animações da revelação
+js/
+  sorteio.js                Núcleo: telefones, grupos, validação, sorteio, criptografia, backup
+  painel.js                 Comportamento do painel
+  revelacao.js              Comportamento da revelação (presente, vinheta, confete)
+  patrocinadores.js         Lista de patrocinadores e seus logos — edite aqui para trocar
+img/patrocinadores/         Logos (PNG, fundo branco)
+tests/sorteio.test.js       Testes do núcleo
+```
+
+Não há etapa de compilação nem dependências: são arquivos estáticos publicados pelo GitHub Pages.
+
+### Manutenção
+- **Trocar patrocinadores:** edite `js/patrocinadores.js` e coloque o logo em `img/patrocinadores/`.
+- **Depois de alterar qualquer CSS ou JS:** aumente o `?v=` nas tags `<link>`/`<script>` dos dois HTML, para os navegadores não usarem a versão antiga guardada em cache.
+- **Não altere o formato dos links nem do armazenamento** (comentados em `js/sorteio.js` e `js/painel.js`): links já enviados e dados salvos no navegador de quem usa o painel dependem deles. Os testes incluem um link e um backup antigos para garantir isso.
+
 ## Testes
 ```
-node tests/sorteio.test.js
+npm test
 ```
+(ou `node tests/sorteio.test.js`; precisa do Node 20 ou mais novo, sem instalar nada)
