@@ -148,11 +148,17 @@
   }
   .on .placa { animation: placa .75s cubic-bezier(.2, 1.5, .4, 1) .4s forwards; }
   .placa img { display: block; height: auto; margin: 0 auto; }
-  .placa .p-eng { width: 68%; }
-  .placa .p-sep { height: 1px; margin: 10px 8px; background: #e6e2dc; opacity: 0; }
-  .placa .p-for { width: 100%; opacity: 0; transform: translateY(14px); }
+  .placa .p-ouro, .placa .p-prata { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .placa .p-ouro img { width: 100%; }
+  .placa .p-sep { height: 1px; margin: 12px 8px; background: #e6e2dc; opacity: 0; }
+  .placa .p-prata { opacity: 0; transform: translateY(14px); }
+  .placa .p-logos { display: flex; justify-content: center; align-items: center; gap: 14px; }
+  .placa .p-logos img { width: 42%; margin: 0; }
   .on .placa .p-sep { animation: aparecer .4s ease 1.05s forwards; }
-  .on .placa .p-for { animation: entrar .55s cubic-bezier(.2, 1.3, .4, 1) 1.1s forwards; }
+  .on .placa .p-prata { animation: entrar .55s cubic-bezier(.2, 1.3, .4, 1) 1.1s forwards; }
+  .selo-nivel { font-size: .6rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; color: #3b2a00; }
+  .selo-nivel.ouro { background: linear-gradient(135deg, #f7d774, #d4a017 55%, #f3cf5b); }
+  .selo-nivel.prata { background: linear-gradient(135deg, #f2f2f2, #b9bec4 55%, #e6e8ea); color: #2c3136; }
   .placa::after {
     content: ""; position: absolute; inset: 0; transform: translateX(-130%);
     background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .95) 50%, transparent 70%);
@@ -171,7 +177,8 @@
   .apoio { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
   .apoio .logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
   .apoio span { text-transform: uppercase; letter-spacing: .2em; font-size: .64rem; font-weight: 700; color: var(--muted); }
-  .apoio img { height: 46px; width: auto; padding: 5px 8px; border-radius: 10px; background: #fff; }
+  .apoio img { height: 44px; width: auto; padding: 5px 8px; border-radius: 10px; background: #fff; }
+  .apoio .a-ouro { height: 54px; padding: 6px 12px; box-shadow: 0 0 0 2px rgba(245, 197, 66, .7); }
 
   /* ---------- Avisos ---------- */
   .aviso { max-width: 360px; }
@@ -233,7 +240,10 @@
         <div class="nome" id="nome"></div>
         <div class="grupo" id="grupo"></div>
         <div class="infos" id="infos"></div>
-        <div class="apoio"><span>Oferecimento</span><div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="forushop.png" alt="forUshop"></div></div>
+        <div class="apoio"><span>Oferecimento</span>
+          <img class="a-ouro" src="forushop.png" alt="forUshop (Patrocínio Ouro)">
+          <div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div>
+        </div>
       </div>
       <div class="botoes"><button id="esconder">🙈 Esconder nome</button></div>
       <p class="segredo">🤫 Shhh! Guarde segredo até o dia da revelação.</p>
@@ -243,7 +253,11 @@
   <div id="vinheta" aria-live="polite" role="status">
     <div class="v-patro">
       <div class="v-of">Este amigo secreto<br>tem o oferecimento de</div>
-      <div class="placa"><img class="p-eng" src="engecid.png" alt="Engecid Engenharia"><div class="p-sep"></div><img class="p-for" src="forushop.png" alt="forUshop"></div>
+      <div class="placa">
+        <div class="p-ouro"><span class="selo-nivel ouro">Patrocínio Ouro</span><img src="forushop.png" alt="forUshop"></div>
+        <div class="p-sep"></div>
+        <div class="p-prata"><span class="selo-nivel prata">Prata</span><div class="p-logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div></div>
+      </div>
       <div class="v-pular">toque para pular</div>
     </div>
     <div class="v-susp">

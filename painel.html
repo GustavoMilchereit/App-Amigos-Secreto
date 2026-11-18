@@ -47,18 +47,23 @@
   .table-wrap { overflow-x: auto; }
   .topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
   .topo .sub { margin-bottom: 0; }
-  .apoio-topo { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px 10px;
+  .apoio-topo { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 14px 12px;
     background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .06); }
-  .apoio-topo span { font-size: .62rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #6b665e; }
-  .apoio-topo .logos { display: flex; align-items: center; gap: 12px; }
+  .apoio-topo .faixa { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .apoio-topo .faixa + .faixa { padding-top: 8px; border-top: 1px solid #ece7df; }
+  .apoio-topo .logos { display: flex; align-items: center; gap: 10px; }
   .apoio-topo img { display: block; width: auto; }
-  .apoio-topo .l-eng { height: 68px; }
-  .apoio-topo .l-for { height: 44px; padding-left: 12px; border-left: 1px solid #e3ddd3; }
+  .apoio-topo .ouro img { height: 46px; }
+  .apoio-topo .prata img { height: 44px; }
+  .selo-nivel { font-size: .58rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; color: #3b2a00; }
+  .selo-nivel.ouro { background: linear-gradient(135deg, #f7d774, #d4a017 55%, #f3cf5b); }
+  .selo-nivel.prata { background: linear-gradient(135deg, #f2f2f2, #b9bec4 55%, #e6e8ea); color: #2c3136; }
   @media (max-width: 560px) {
-    .apoio-topo { padding: 6px 8px 8px; }
-    .apoio-topo .logos { flex-direction: column; gap: 4px; }
-    .apoio-topo .l-eng { height: 46px; }
-    .apoio-topo .l-for { height: auto; width: 96px; padding: 4px 0 0; border-left: 0; border-top: 1px solid #e3ddd3; }
+    .topo { flex-direction: column; gap: 12px; }
+    .apoio-topo { flex-direction: row; justify-content: center; align-self: stretch; gap: 14px; padding: 8px 10px; }
+    .apoio-topo .faixa + .faixa { padding: 0 0 0 14px; border-top: 0; border-left: 1px solid #ece7df; }
+    .apoio-topo .ouro img { height: 38px; }
+    .apoio-topo .prata img { height: 38px; }
     .topo h1 { font-size: 1.45rem; }
   }
   .contador { font-weight: 500; color: var(--muted); font-size: .9rem; }
@@ -103,7 +108,10 @@
       <h1>🎁 Amigo Secreto</h1>
       <p class="sub">Sorteio sem servidor. Cada pessoa recebe no WhatsApp ou por SMS um link pessoal criptografado. Este painel não guarda quem tirou quem.</p>
     </div>
-    <div class="apoio-topo"><span>Apoio</span><div class="logos"><img class="l-eng" src="engecid.png" alt="Engecid Engenharia"><img class="l-for" src="forushop.png" alt="forUshop"></div></div>
+    <div class="apoio-topo" aria-label="Patrocinadores">
+      <div class="faixa ouro"><span class="selo-nivel ouro">Patrocínio Ouro</span><div class="logos"><img src="forushop.png" alt="forUshop"></div></div>
+      <div class="faixa prata"><span class="selo-nivel prata">Prata</span><div class="logos"><img src="engecid.png" alt="Engecid Engenharia"><img src="fortel.png" alt="Fortel"></div></div>
+    </div>
   </header>
 
   <section id="sec-evento">
