@@ -1,7 +1,7 @@
 /*
  * Painel do organizador (painel.html).
  *
- *  1. Cores (tema claro e escuro)
+ *  1. Cores (sempre tema claro)
  *  2. Base
  *  3. Cabeçalho e selo de patrocinadores
  *  4. Seções, campos e botões
@@ -13,7 +13,11 @@
  */
 
 /* 1. Cores ---------------------------------------------------------------- */
+/* O painel é sempre claro, mesmo com o navegador no modo escuro: assim o selo
+   de patrocinadores (logos com fundo branco) combina com a página.
+   `color-scheme: light` mantém campos, barras de rolagem e afins também claros. */
 :root {
+  color-scheme: light;
   --fundo: #f6f3ee;
   --cartao: #ffffff;
   --texto: #1f1d1a;
@@ -23,19 +27,6 @@
   --positivo: #1e6b3a;      /* WhatsApp, confirmações */
   --aviso: #8a5a00;
   --aviso-fundo: #fff4dc;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fundo: #171614;
-    --cartao: #22201d;
-    --texto: #f1ede6;
-    --texto-suave: #a59f95;
-    --borda: #3a3631;
-    --destaque: #e5534b;
-    --positivo: #3fae69;
-    --aviso: #f0c060;
-    --aviso-fundo: #3a2f17;
-  }
 }
 
 /* 2. Base ----------------------------------------------------------------- */
